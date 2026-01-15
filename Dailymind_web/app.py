@@ -25,6 +25,9 @@ def is_license_valid(device_id, license_key):
         return False
     return license_key.strip().upper() == generate_license(device_id)
 
+@app.route("/")
+def health():
+    return "DailyMind API running"
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -62,6 +65,7 @@ Respond naturally and concisely.
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
