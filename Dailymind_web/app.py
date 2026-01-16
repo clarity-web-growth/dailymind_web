@@ -4,6 +4,9 @@ import json
 import hashlib
 from openai import OpenAI
 
+# ======================
+# APP
+# ======================
 app = Flask(__name__)
 
 # ======================
@@ -21,7 +24,11 @@ def generate_license(device_id):
     return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
 
 def is_license_valid(device_id, license_key):
-    return license_key and license_key.strip().upper() == generate_license(device_id)
+    return (
+        device_id
+        and license_key
+        and license_key.strip().upper() == generate_license(device_id)
+    )
 
 def load_memory():
     if not os.path.exists(MEMORY_FILE):
@@ -48,7 +55,7 @@ def dashboard():
     )
 
 # ======================
-# CHAT STREAM (STABLE)
+# CHAT STREAM (CHATGPT-LIKE)
 # ======================
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
@@ -56,17 +63,16 @@ def chat_stream():
 
     if not is_license_valid(data.get("device_id"), data.get("license_key")):
         return jsonify({"error": "FORBIDDEN"}), 403
-        
-memory = load_memory()
 
-memory_context = ""
-if memory.get("entries"):
-    recent = memory["entries"][-5:]
-    memory_context = "\n".join(
-        f"- {m['text']}" for m in recent
-    )
+    # ---- Load memory context safely
+    memory = load_memory()
+    memory_context = ""
 
-  system_prompt = f"""
+    if isinstance(memory.get("entries"), list) and memory["entries"]:
+        recent = memory["entries"][-5:]
+        memory_context = "\n".join(f"- {m['text']}" for m in recent)
+
+    system_prompt = f"""
 You are DailyMind.
 
 Past context:
@@ -74,49 +80,53 @@ Past context:
 
 Personality: {data.get("personality", "Friend")}
 Behave like ChatGPT.
+Respond clearly and naturally.
 """
 
-
     def generate():
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": data.get("text", "")}
-    ]
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": data.get("text", "")}
+        ]
 
-    while True:
-        stream = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            temperature=0.8,
-            max_tokens=500,
-            stream=True
-        )
+        while True:
+            stream = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                temperature=0.8,
+                max_tokens=500,
+                stream=True
+            )
 
-        full_reply = ""
-        finish_reason = None
+            full_reply = ""
+            finish_reason = None
 
-        for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.get("content"):
-                token = chunk.choices[0].delta["content"]
-                full_reply += token
-                yield token.encode("utf-8")
+            try:
+                for chunk in stream:
+                    if chunk.choices and chunk.choices[0].delta.get("content"):
+                        token = chunk.choices[0].delta["content"]
+                        full_reply += token
+                        yield token.encode("utf-8")
 
-            if chunk.choices and chunk.choices[0].finish_reason:
-                finish_reason = chunk.choices[0].finish_reason
+                    if chunk.choices and chunk.choices[0].finish_reason:
+                        finish_reason = chunk.choices[0].finish_reason
 
-        messages.append({"role": "assistant", "content": full_reply})
+            except Exception:
+                yield b"\n[Connection stabilized]\n"
+                break
 
-        if finish_reason != "length":
-            break
+            messages.append({"role": "assistant", "content": full_reply})
 
+            if finish_reason != "length":
+                break
+
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/plain; charset=utf-8"
+    )
 
 # ======================
 # LOCAL RUN
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
