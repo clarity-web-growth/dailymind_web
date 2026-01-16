@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Response, stream_with_context
 import os
 import json
 import hashlib
@@ -50,8 +50,8 @@ def dashboard():
         subscription=data.get("subscription", "free")
     )
 
-@app.route("/chat", methods=["POST"])
-def chat():
+@app.route("/chat-stream", methods=["POST"])
+def chat_stream():
     data = request.get_json()
 
     user_text = data.get("text", "")
@@ -62,32 +62,42 @@ def chat():
     if not is_license_valid(device_id, license_key):
         return jsonify({
             "error": "FORBIDDEN",
-            "message": "Upgrade to DailyMind Premium to continue using AI."
+            "message": "Upgrade to DailyMind Premium"
         }), 403
 
     system_prompt = f"""
 You are DailyMind.
 Personality: {personality}
 
-RULES:
-- Respond calmly and intelligently
-- Always finish your thoughts
-- Structure long answers clearly
+Behave like ChatGPT:
+- Think clearly
+- Respond naturally
+- Never stop mid-sentence
+- If long, structure clearly
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_text}
-        ],
-        temperature=0.8,
-        max_tokens=300
+    def generate():
+        stream = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_text}
+            ],
+            temperature=0.8,
+            max_tokens=400,
+            stream=True
+        )
+
+        for chunk in stream:
+            if chunk.choices[0].delta.get("content"):
+                token = chunk.choices[0].delta["content"]
+                yield token
+
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/plain"
     )
 
-    reply = response.choices[0].message.content.strip()
-
-    return jsonify({"reply": reply})
 
 
 # -------------------------
@@ -95,6 +105,7 @@ RULES:
 # -------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
