@@ -85,10 +85,15 @@ def chat():
             "message": "Upgrade to DailyMind Premium to continue using AI."
         }), 403
 
-    system_prompt = f"""
+system_prompt = f"""
 You are DailyMind.
-Personality mode: {personality}
-Be calm, intelligent, concise, and human-like.
+Personality: {personality}
+
+RULES:
+- Respond like a calm, intelligent human mentor
+- Always finish your thoughts
+- If the response is long, structure it clearly
+- Never cut off mid-sentence
 """
 
     response = client.chat.completions.create(
@@ -98,7 +103,7 @@ Be calm, intelligent, concise, and human-like.
             {"role": "user", "content": user_text}
         ],
         temperature=0.8,
-        max_tokens=180
+        max_tokens=500
     )
 
     reply = response.choices[0].message.content.strip()
@@ -124,5 +129,6 @@ Be calm, intelligent, concise, and human-like.
 # -------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
