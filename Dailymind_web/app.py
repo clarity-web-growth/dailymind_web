@@ -1,10 +1,13 @@
-from flask import Response, stream_with_context
+from flask import Flask, request, jsonify, render_template, Response, stream_with_context
 import os
 import json
 import hashlib
-from openai import OpenAI
 from datetime import datetime
+from openai import OpenAI
 
+# ======================
+# APP
+# ======================
 app = Flask(__name__)
 
 # ======================
@@ -50,6 +53,9 @@ def dashboard():
         subscription=data.get("subscription", "free")
     )
 
+# ======================
+# STREAMING CHAT (LIKE CHATGPT)
+# ======================
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
     data = request.get_json()
@@ -73,40 +79,29 @@ Behave like ChatGPT:
 - Think clearly
 - Respond naturally
 - Never stop mid-sentence
-- If long, structure clearly
+- Structure long answers
 """
 
     def generate():
-        stream = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
+        with client.responses.stream(
+            model="gpt-4.1-mini",
+            input=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_text}
-            ],
-            temperature=0.8,
-            max_tokens=400,
-            stream=True
-        )
-
-        for chunk in stream:
-            if chunk.choices[0].delta.get("content"):
-                token = chunk.choices[0].delta["content"]
-                yield token
+            ]
+        ) as stream:
+            for event in stream:
+                if event.type == "response.output_text.delta":
+                    yield event.delta
 
     return Response(
         stream_with_context(generate()),
         content_type="text/plain"
     )
 
-
-
-# -------------------------
-# Local run (ignored by Render)
-# -------------------------
+# ======================
+# LOCAL RUN
+# ======================
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
 
