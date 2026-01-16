@@ -1,16 +1,40 @@
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 import hashlib
 import os
+import json
 from openai import OpenAI
-from flask import render_template
 
+# ------------------------
+# APP INIT (ONLY ONCE)
+# ------------------------
+app = Flask(__name__)
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+SECRET_SALT = "DAILYMIND-2026-SECURE"
+
+# ------------------------
+# LICENSE SYSTEM
+# ------------------------
+def generate_license(device_id):
+    raw = f"{device_id}-{SECRET_SALT}"
+    return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
+
+def is_license_valid(device_id, license_key):
+    if not device_id or not license_key:
+        return False
+    return license_key.strip().upper() == generate_license(device_id)
+
+# ------------------------
+# HOME / HEALTH CHECK
+# ------------------------
+@app.route("/")
+def health():
+    return "DailyMind API running"
+
+# ------------------------
+# DASHBOARD
+# ------------------------
 @app.route("/dashboard")
 def dashboard():
     try:
@@ -27,25 +51,9 @@ def dashboard():
         subscription=data.get("subscription", "free")
     )
 
-app = Flask(__name__)
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-SECRET_SALT = "DAILYMIND-2026-SECURE"
-
-def generate_license(device_id):
-    raw = f"{device_id}-{SECRET_SALT}"
-    return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
-
-def is_license_valid(device_id, license_key):
-    if not device_id or not license_key:
-        return False
-    return license_key.strip().upper() == generate_license(device_id)
-
-@app.route("/")
-def health():
-    return "DailyMind API running"
-
+# ------------------------
+# CHAT API
+# ------------------------
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.get_json()
@@ -80,8 +88,12 @@ Respond naturally and concisely.
     reply = response.choices[0].message.content.strip()
     return jsonify({"reply": reply})
 
+# ------------------------
+# LOCAL RUN (Render ignores this)
+# ------------------------
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
+
 
 
 
