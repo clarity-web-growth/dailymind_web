@@ -112,8 +112,8 @@ Respond clearly and naturally.
                         finish_reason = chunk.choices[0].finish_reason
 
             except Exception:
-                yield b"\n[Connection stabilized]\n"
-                break
+                yield chunk.choices[0].delta["content"]
+
 
             messages.append({"role": "assistant", "content": full_reply})
 
@@ -121,12 +121,14 @@ Respond clearly and naturally.
                 break
 
     return Response(
-        stream_with_context(generate()),
-        content_type="text/plain; charset=utf-8"
+    stream_with_context(generate()),
+    content_type="text/plain; charset=utf-8"
     )
+
 
 # ======================
 # LOCAL RUN
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
