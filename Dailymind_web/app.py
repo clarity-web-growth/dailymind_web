@@ -2,12 +2,8 @@ from flask import Flask, request, jsonify, render_template, Response, stream_wit
 import os
 import json
 import hashlib
-from datetime import datetime
 from openai import OpenAI
 
-# ======================
-# APP
-# ======================
 app = Flask(__name__)
 
 # ======================
@@ -16,7 +12,6 @@ app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 SECRET_SALT = "DAILYMIND-2026-SECURE"
 MEMORY_FILE = "daily_mind_memory.json"
-
 
 # ======================
 # HELPERS
@@ -27,7 +22,7 @@ def generate_license(device_id):
 
 def is_license_valid(device_id, license_key):
     return license_key and license_key.strip().upper() == generate_license(device_id)
-    
+
 def load_memory():
     if not os.path.exists(MEMORY_FILE):
         return {}
@@ -53,7 +48,7 @@ def dashboard():
     )
 
 # ======================
-# STREAMING CHAT (LIKE CHATGPT)
+# CHAT STREAM (STABLE)
 # ======================
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
@@ -65,28 +60,30 @@ def chat_stream():
     system_prompt = f"""
 You are DailyMind.
 Personality: {data.get("personality", "Friend")}
-Behave like ChatGPT.
+
+Behave like ChatGPT:
+- Stream naturally
+- Never stop mid sentence
+- Be clear and structured
 """
 
     def generate():
-        stream = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
+        with client.responses.stream(
+            model="gpt-4.1-mini",
+            input=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": data.get("text", "")}
             ],
             temperature=0.8,
-            max_tokens=500,
-            stream=True
-        )
-
-        for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.get("content"):
-                yield chunk.choices[0].delta["content"].encode("utf-8")
+            max_output_tokens=600,
+        ) as stream:
+            for event in stream:
+                if event.type == "response.output_text.delta":
+                    yield event.delta
 
     return Response(
         stream_with_context(generate()),
-        content_type="application/octet-stream"
+        content_type="text/plain; charset=utf-8"
     )
 
 # ======================
@@ -94,6 +91,7 @@ Behave like ChatGPT.
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
