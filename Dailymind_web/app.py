@@ -9,6 +9,23 @@ from flask import Flask, request, jsonify
 import hashlib
 import os
 from openai import OpenAI
+from flask import render_template
+
+@app.route("/dashboard")
+def dashboard():
+    try:
+        with open("daily_mind_memory.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except:
+        data = {}
+
+    return render_template(
+        "dashboard.html",
+        conversation_count=data.get("conversation_count", 0),
+        personality=data.get("last_personality", "Unknown"),
+        last_topic=data.get("last_topic", "None"),
+        subscription=data.get("subscription", "free")
+    )
 
 app = Flask(__name__)
 
@@ -65,6 +82,7 @@ Respond naturally and concisely.
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
