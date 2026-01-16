@@ -3,6 +3,7 @@ import hashlib
 import os
 import json
 from openai import OpenAI
+from datetime import datetime
 
 # ------------------------
 # APP INIT (ONLY ONCE)
@@ -69,11 +70,23 @@ def chat():
             "message": "Upgrade to DailyMind Premium to continue using AI."
         }), 403
 
+    # ✅ SAVE MEMORY
+    memory = load_memory()
+    memory["conversation_count"] += 1
+    memory["last_personality"] = personality
+    memory["last_topic"] = "discipline"
+    memory["entries"].append({
+        "time": datetime.now().isoformat(),
+        "text": user_text
+    })
+    save_memory(memory)
+
+    # 🧠 AI RESPONSE
     system_prompt = f"""
-You are DailyMind – calm, intelligent, human-like.
-Personality mode: {personality}
-Respond naturally and concisely.
-"""
+    You are DailyMind – calm, intelligent, human-like.
+    Personality mode: {personality}
+    Respond naturally and concisely.
+    """
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -93,6 +106,7 @@ Respond naturally and concisely.
 # ------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
