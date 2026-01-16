@@ -56,41 +56,66 @@ def chat_stream():
 
     if not is_license_valid(data.get("device_id"), data.get("license_key")):
         return jsonify({"error": "FORBIDDEN"}), 403
+        
+memory = load_memory()
 
-    system_prompt = f"""
+memory_context = ""
+if memory.get("entries"):
+    recent = memory["entries"][-5:]
+    memory_context = "\n".join(
+        f"- {m['text']}" for m in recent
+    )
+
+  system_prompt = f"""
 You are DailyMind.
-Personality: {data.get("personality", "Friend")}
 
-Behave like ChatGPT:
-- Stream naturally
-- Never stop mid sentence
-- Be clear and structured
+Past context:
+{memory_context}
+
+Personality: {data.get("personality", "Friend")}
+Behave like ChatGPT.
 """
 
-    def generate():
-        with client.responses.stream(
-            model="gpt-4.1-mini",
-            input=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": data.get("text", "")}
-            ],
-            temperature=0.8,
-            max_output_tokens=600,
-        ) as stream:
-            for event in stream:
-                if event.type == "response.output_text.delta":
-                    yield event.delta
 
-    return Response(
-        stream_with_context(generate()),
-        content_type="text/plain; charset=utf-8"
-    )
+    def generate():
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": data.get("text", "")}
+    ]
+
+    while True:
+        stream = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.8,
+            max_tokens=500,
+            stream=True
+        )
+
+        full_reply = ""
+        finish_reason = None
+
+        for chunk in stream:
+            if chunk.choices and chunk.choices[0].delta.get("content"):
+                token = chunk.choices[0].delta["content"]
+                full_reply += token
+                yield token.encode("utf-8")
+
+            if chunk.choices and chunk.choices[0].finish_reason:
+                finish_reason = chunk.choices[0].finish_reason
+
+        messages.append({"role": "assistant", "content": full_reply})
+
+        if finish_reason != "length":
+            break
+
 
 # ======================
 # LOCAL RUN
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
