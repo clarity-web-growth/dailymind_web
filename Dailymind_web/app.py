@@ -67,14 +67,10 @@ def chat_stream():
     system_prompt = f"""
 You are DailyMind.
 Personality: {data.get("personality", "Friend")}
-Behave like ChatGPT.
-Respond clearly and fully.
+Respond clearly and completely.
 """
 
     def generate():
-        # 🔴 IMPORTANT: send something immediately
-        yield " "
-
         try:
             stream = client.chat.completions.create(
                 model="gpt-4o",
@@ -88,8 +84,12 @@ Respond clearly and fully.
             )
 
             for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.get("content"):
-                    yield chunk.choices[0].delta["content"]
+                if not chunk.choices:
+                    continue
+
+                delta = chunk.choices[0].delta
+                if delta and delta.get("content"):
+                    yield delta["content"]
 
         except Exception as e:
             yield "\n[Server stream error]\n"
@@ -99,9 +99,10 @@ Respond clearly and fully.
         content_type="text/plain; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"  # VERY IMPORTANT for Render
+            "X-Accel-Buffering": "no"  # 🔥 VERY IMPORTANT
         }
     )
+
 
 
 # ======================
@@ -109,5 +110,6 @@ Respond clearly and fully.
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
