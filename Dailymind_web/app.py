@@ -64,65 +64,43 @@ def chat_stream():
     if not is_license_valid(data.get("device_id"), data.get("license_key")):
         return jsonify({"error": "FORBIDDEN"}), 403
 
-    # ---- Load memory context safely
-    memory = load_memory()
-    memory_context = ""
-
-    if isinstance(memory.get("entries"), list) and memory["entries"]:
-        recent = memory["entries"][-5:]
-        memory_context = "\n".join(f"- {m['text']}" for m in recent)
-
     system_prompt = f"""
 You are DailyMind.
-
-Past context:
-{memory_context}
-
 Personality: {data.get("personality", "Friend")}
 Behave like ChatGPT.
-Respond clearly and naturally.
+Respond clearly and fully.
 """
 
     def generate():
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": data.get("text", "")}
-        ]
+        # 🔴 IMPORTANT: send something immediately
+        yield " "
 
-        while True:
+        try:
             stream = client.chat.completions.create(
                 model="gpt-4o",
-                messages=messages,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": data.get("text", "")}
+                ],
                 temperature=0.8,
-                max_tokens=500,
+                max_tokens=600,
                 stream=True
             )
 
-            full_reply = ""
-            finish_reason = None
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.get("content"):
+                    yield chunk.choices[0].delta["content"]
 
-            try:
-                for chunk in stream:
-                    if chunk.choices and chunk.choices[0].delta.get("content"):
-                        token = chunk.choices[0].delta["content"]
-                        full_reply += token
-                        yield token.encode("utf-8")
-
-                    if chunk.choices and chunk.choices[0].finish_reason:
-                        finish_reason = chunk.choices[0].finish_reason
-
-            except Exception:
-                yield chunk.choices[0].delta["content"]
-
-
-            messages.append({"role": "assistant", "content": full_reply})
-
-            if finish_reason != "length":
-                break
+        except Exception as e:
+            yield "\n[Server stream error]\n"
 
     return Response(
-    stream_with_context(generate()),
-    content_type="text/plain; charset=utf-8"
+        stream_with_context(generate()),
+        content_type="text/plain; charset=utf-8",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"  # VERY IMPORTANT for Render
+        }
     )
 
 
@@ -131,4 +109,5 @@ Respond clearly and naturally.
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
