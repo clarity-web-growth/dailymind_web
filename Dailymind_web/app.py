@@ -14,7 +14,7 @@ app = Flask(__name__)
 # CONFIG
 # ======================
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-SECRET_SALT = "DAILYMIND-2026-SECURE"
+SECRET_SALT = "DAILYMIND-2026-SECURE
 MEMORY_FILE = "daily_mind_memory.json"
 
 # ======================
@@ -25,10 +25,8 @@ def generate_license(device_id):
     return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
 
 def is_license_valid(device_id, license_key):
-    if not device_id or not license_key:
-        return False
-    return license_key.strip().upper() == generate_license(device_id)
-
+    return license_key and license_key.strip().upper() == generate_license(device_id)
+    
 def load_memory():
     if not os.path.exists(MEMORY_FILE):
         return {}
@@ -60,43 +58,34 @@ def dashboard():
 def chat_stream():
     data = request.get_json()
 
-    user_text = data.get("text", "")
-    personality = data.get("personality", "Friend")
-    device_id = data.get("device_id")
-    license_key = data.get("license_key")
-
-    if not is_license_valid(device_id, license_key):
-        return jsonify({
-            "error": "FORBIDDEN",
-            "message": "Upgrade to DailyMind Premium"
-        }), 403
+    if not is_license_valid(data.get("device_id"), data.get("license_key")):
+        return jsonify({"error": "FORBIDDEN"}), 403
 
     system_prompt = f"""
 You are DailyMind.
-Personality: {personality}
-
-Behave like ChatGPT:
-- Think clearly
-- Respond naturally
-- Never stop mid-sentence
-- Structure long answers
+Personality: {data.get("personality", "Friend")}
+Behave like ChatGPT.
 """
 
     def generate():
-        with client.responses.stream(
-            model="gpt-4.1-mini",
-            input=[
+        stream = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_text}
-            ]
-        ) as stream:
-            for event in stream:
-                if event.type == "response.output_text.delta":
-                    yield event.delta
+                {"role": "user", "content": data.get("text", "")}
+            ],
+            temperature=0.8,
+            max_tokens=500,
+            stream=True
+        )
+
+        for chunk in stream:
+            if chunk.choices and chunk.choices[0].delta.get("content"):
+                yield chunk.choices[0].delta["content"].encode("utf-8")
 
     return Response(
         stream_with_context(generate()),
-        content_type="text/plain"
+        content_type="application/octet-stream"
     )
 
 # ======================
@@ -104,4 +93,5 @@ Behave like ChatGPT:
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
