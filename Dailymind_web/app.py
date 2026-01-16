@@ -14,8 +14,9 @@ app = Flask(__name__)
 # CONFIG
 # ======================
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-SECRET_SALT = "DAILYMIND-2026-SECURE
+SECRET_SALT = "DAILYMIND-2026-SECURE"
 MEMORY_FILE = "daily_mind_memory.json"
+
 
 # ======================
 # HELPERS
@@ -93,5 +94,6 @@ Behave like ChatGPT.
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
