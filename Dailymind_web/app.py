@@ -72,14 +72,21 @@ def chat():
 
     # ✅ SAVE MEMORY
     memory = load_memory()
-    memory["conversation_count"] += 1
+
+    memory["conversation_count"] = memory.get("conversation_count", 0) + 1
     memory["last_personality"] = personality
-    memory["last_topic"] = "discipline"
+    memory["last_topic"] = "trading"
+
+    if "entries" not in memory:
+        memory["entries"] = []
+
     memory["entries"].append({
-        "time": datetime.now().isoformat(),
-        "text": user_text
-    })
-    save_memory(memory)
+      "time": datetime.now().isoformat(),
+      "text": user_text
+   })
+
+save_memory(memory)
+
 
     # 🧠 AI RESPONSE
     system_prompt = f"""
@@ -106,6 +113,7 @@ def chat():
 # ------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
