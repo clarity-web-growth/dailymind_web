@@ -61,25 +61,24 @@ def dashboard():
 def chat_stream():
     data = request.get_json()
 
-   # TEMP: disable license check
-# if not is_license_valid(...):
-#     return jsonify({"error": "FORBIDDEN"}), 403
-
     def generate():
         try:
-            stream = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "Behave like ChatGPT."},
-                    {"role": "user", "content": data.get("text", "")}
+            with client.responses.stream(
+                model="gpt-4.1-mini",
+                input=[
+                    {
+                        "role": "system",
+                        "content": f"You are DailyMind. Personality: {data.get('personality', 'Friend')}"
+                    },
+                    {
+                        "role": "user",
+                        "content": data.get("text", "")
+                    }
                 ],
-                stream=True
-            )
-
-            for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.get("content"):
-                    yield chunk.choices[0].delta["content"]
-
+            ) as stream:
+                for event in stream:
+                    if event.type == "response.output_text.delta":
+                        yield event.delta
         except Exception as e:
             yield "\n[Server stream error]\n"
 
@@ -95,6 +94,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
