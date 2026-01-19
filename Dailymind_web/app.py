@@ -3,6 +3,7 @@ import os
 import json
 import hashlib
 from openai import OpenAI
+from flask import Flask, render_template
 
 # ======================
 # APP
@@ -53,6 +54,10 @@ def dashboard():
         last_topic=data.get("last_topic", "None"),
         subscription=data.get("subscription", "free")
     )
+    
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 # ======================
 # CHAT STREAM (CHATGPT-LIKE)
@@ -94,6 +99,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
