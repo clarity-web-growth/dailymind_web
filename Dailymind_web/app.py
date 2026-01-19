@@ -64,43 +64,27 @@ def chat_stream():
     if not is_license_valid(data.get("device_id"), data.get("license_key")):
         return jsonify({"error": "FORBIDDEN"}), 403
 
-    system_prompt = f"""
-You are DailyMind.
-Personality: {data.get("personality", "Friend")}
-Respond clearly and completely.
-"""
-
     def generate():
         try:
             stream = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": system_prompt},
+                    {"role": "system", "content": "Behave like ChatGPT."},
                     {"role": "user", "content": data.get("text", "")}
                 ],
-                temperature=0.8,
-                max_tokens=600,
                 stream=True
             )
 
             for chunk in stream:
-                if not chunk.choices:
-                    continue
-
-                delta = chunk.choices[0].delta
-                if delta and delta.get("content"):
-                    yield delta["content"]
+                if chunk.choices and chunk.choices[0].delta.get("content"):
+                    yield chunk.choices[0].delta["content"]
 
         except Exception as e:
             yield "\n[Server stream error]\n"
 
     return Response(
         stream_with_context(generate()),
-        content_type="text/plain; charset=utf-8",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"  # 🔥 VERY IMPORTANT
-        }
+        content_type="text/plain; charset=utf-8"
     )
 
 
@@ -110,6 +94,7 @@ Respond clearly and completely.
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
