@@ -1,24 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>DailyMind</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <title>DailyMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
-<div class="container">
-    <h1>🧠 DailyMind</h1>
-    <p>Think clearly. Speak freely.</p>
+<div class="app">
+  <h1>🧠 DailyMind</h1>
+  <p class="tagline">Think clearly. Speak freely.</p>
 
-    <div class="chat-box">
-        <div class="bot">Welcome to DailyMind 👋</div>
-    </div>
+  <select id="personality">
+    <option>Friend</option>
+    <option>Coach</option>
+    <option>Philosopher</option>
+  </select>
 
-    <input type="text" placeholder="Type your message..." />
-    <button>Send</button>
+  <div id="chat"></div>
+
+  <textarea id="input" placeholder="Type your message..."></textarea>
+  <button onclick="sendMessage()">Send</button>
 </div>
 
+<script src="/static/app.js"></script>
 </body>
 </html>
+
