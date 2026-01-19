@@ -61,8 +61,9 @@ def dashboard():
 def chat_stream():
     data = request.get_json()
 
-    if not is_license_valid(data.get("device_id"), data.get("license_key")):
-        return jsonify({"error": "FORBIDDEN"}), 403
+   # TEMP: disable license check
+# if not is_license_valid(...):
+#     return jsonify({"error": "FORBIDDEN"}), 403
 
     def generate():
         try:
@@ -94,6 +95,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
