@@ -8,23 +8,29 @@
 </head>
 <body>
 
-<div class="app">
-  <h1>🧠 DailyMind</h1>
-  <p class="tagline">Think clearly. Speak freely.</p>
+  <div class="container">
+    <h1>🧠 DailyMind</h1>
+    <p class="tagline">Think clearly. Speak freely.</p>
 
-  <select id="personality">
-    <option>Friend</option>
-    <option>Coach</option>
-    <option>Philosopher</option>
-  </select>
+    <select id="personality">
+      <option>Friend</option>
+      <option>Coach</option>
+      <option>Philosopher</option>
+    </select>
 
-  <div id="chat"></div>
+    <div id="chat-box" class="chat-box"></div>
 
-  <textarea id="input" placeholder="Type your message..."></textarea>
-  <button onclick="sendMessage()">Send</button>
-</div>
+    <input
+      id="message-input"
+      type="text"
+      placeholder="Type your message..."
+    />
 
-<script src="/static/app.js"></script>
+    <button id="send-btn">Send</button>
+  </div>
+
+  <script src="/static/app.js"></script>
 </body>
 </html>
+
 
