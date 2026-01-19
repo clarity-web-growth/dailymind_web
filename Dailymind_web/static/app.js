@@ -1,35 +1,46 @@
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
+const chatBox = document.getElementById("chat-box");
+const input = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
+const personalitySelect = document.getElementById("personality");
 
-function add(text) {
-  chat.textContent += text;
-  chat.scrollTop = chat.scrollHeight;
+function appendMessage(text, className) {
+  const div = document.createElement("div");
+  div.className = className;
+  div.textContent = text;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-async function sendMessage() {
+sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
+  appendMessage("You: " + text, "user");
   input.value = "";
-  add("\n\nYou: " + text + "\nDailyMind: ");
 
-  const res = await fetch("/chat-stream", {
+  const response = await fetch("/chat-stream", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
-      text,
-      personality: document.getElementById("personality").value,
-      device_id: "web-user",
-      license_key: ""
+      text: text,
+      personality: personalitySelect.value,
+      device_id: "WEB",
+      license_key: "WEB"
     })
   });
 
-  const reader = res.body.getReader();
+  const reader = response.body.getReader();
   const decoder = new TextDecoder();
+
+  appendMessage("DailyMind: ", "bot");
 
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
-    add(decoder.decode(value));
+    chatBox.lastChild.textContent += decoder.decode(value);
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
-}
+};
+
