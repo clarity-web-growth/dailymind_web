@@ -41,8 +41,8 @@ def load_memory():
 # ROUTES
 # ======================
 @app.route("/")
-def health():
-    return "DailyMind API running"
+def home():
+    return render_template("index.html")
 
 @app.route("/dashboard")
 def dashboard():
@@ -55,10 +55,6 @@ def dashboard():
         subscription=data.get("subscription", "free")
     )
     
-@app.route("/")
-def home():
-    return render_template("index.html")
-
 # ======================
 # CHAT STREAM (CHATGPT-LIKE)
 # ======================
@@ -99,6 +95,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
