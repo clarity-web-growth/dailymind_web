@@ -54,6 +54,10 @@ def dashboard():
         last_topic=data.get("last_topic", "None"),
         subscription=data.get("subscription", "free")
     )
+    
+@app.route("/upgrade")
+def upgrade():
+    return render_template("upgrade.html")
 
 # ======================
 # CHAT STREAM
@@ -84,6 +88,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
