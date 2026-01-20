@@ -13,7 +13,6 @@ import hashlib
 import requests
 from openai import OpenAI
 from models import db, User
-from datetime import datetime
 
 # ======================
 # APP
@@ -31,10 +30,10 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
-PAYSTACK_PAYMENT_URL = "https://paystack.shop/pay/yzthx-tqho"
+
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 SECRET_SALT = "DAILYMIND-2026-SECURE"
 MEMORY_FILE = "daily_mind_memory.json"
@@ -42,8 +41,8 @@ MEMORY_FILE = "daily_mind_memory.json"
 # ======================
 # HELPERS
 # ======================
-def generate_license(email: str) -> str:
-    raw = f"{email}-{SECRET_SALT}"
+def generate_license(seed: str) -> str:
+    raw = f"{seed}-{SECRET_SALT}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
 
 def load_memory():
@@ -52,26 +51,8 @@ def load_memory():
     with open(MEMORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def enforce_subscription(user):
-    if not user:
-        return False
-
-    if user.subscription != "premium":
-        return False
-
-    if not user.subscription_expires:
-        return False
-
-    if user.subscription_expires < datetime.utcnow():
-        user.subscription = "free"
-        db.session.commit()
-        return False
-
-    return True
-
-
 # ======================
-# ROUTES
+# ROUTES (UI)
 # ======================
 @app.route("/")
 def home():
@@ -79,24 +60,12 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    email = request.args.get("email")
-    user = User.query.filter_by(email=email).first()
-
-    if not user:
-        return redirect("/upgrade")
-
-    expires = (
-        user.subscription_expires.strftime("%Y-%m-%d")
-        if user.subscription_expires
-        else "N/A"
-    )
-
+    data = load_memory()
     return render_template(
         "dashboard.html",
-        email=user.email,
-        plan=user.subscription,
-        expires=expires,
-        license_key=user.license_key,
+        conversation_count=data.get("conversation_count", 0),
+        personality=data.get("last_personality", "Friend"),
+        last_topic=data.get("last_topic", "None"),
     )
 
 @app.route("/upgrade")
@@ -105,16 +74,19 @@ def upgrade():
 
 @app.route("/pay")
 def pay():
-    return redirect(PAYSTACK_PAYMENT_URL)
+    return redirect("https://paystack.shop/pay/yzthx-tqho")
 
+# ======================
+# PAYSTACK VERIFY (AUTO-UPGRADE)
+# ======================
 @app.route("/payment-success")
 def payment_success():
     reference = request.args.get("reference")
     if not reference:
-        return "Missing reference", 400
+        return "Missing payment reference", 400
 
     headers = {
-        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
+        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"
     }
 
     verify_url = f"https://api.paystack.co/transaction/verify/{reference}"
@@ -130,17 +102,21 @@ def payment_success():
     email = data["customer"]["email"]
     license_key = generate_license(email)
 
-   user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(email=email)
 
-if not user:
-       user = User(email=email)
-       db.session.add(user)
+    user.subscription = "premium"
+    user.license_key = license_key
 
-       user.activate_premium(days=30)
-       user.license_key = generate_license(email)
-       db.session.commit()
+    db.session.add(user)
+    db.session.commit()
+
     return render_template("success.html")
 
+# ======================
+# CHECK PREMIUM (FRONTEND)
+# ======================
 @app.route("/check-premium", methods=["POST"])
 def check_premium():
     data = request.get_json()
@@ -167,8 +143,7 @@ def chat_stream():
     email = data.get("email")
 
     user = User.query.filter_by(email=email).first()
-
-    if not enforce_subscription(user):
+    if not user or user.subscription != "premium":
         return Response(
             "Upgrade to Premium to continue.\n",
             content_type="text/plain",
@@ -204,7 +179,8 @@ def chat_stream():
 # LOCAL
 # ======================
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
+
 
 
 
