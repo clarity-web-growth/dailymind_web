@@ -44,19 +44,22 @@
 
 <body>
     <div class="card">
-        <h2>🧠 DailyMind Dashboard</h2>
+       <h2>DailyMind Dashboard</h2>
 
-        <p><strong>Email:</strong> {{ email }}</p>
-        <p>
-            <strong>Plan:</strong>
-            <span class="badge {{ 'premium' if plan == 'Premium' else 'free' }}">
-                {{ plan }}
-            </span>
-        </p>
+         <p><strong>Email:</strong> {{ email }}</p>
+         <p><strong>Plan:</strong> {{ plan|capitalize }}</p>
+         <p><strong>Expires:</strong> {{ expires }}</p>
 
-        {% if expires %}
-            <p><strong>Expires:</strong> {{ expires }}</p>
-        {% endif %}
+      {% if license_key %}
+      <p><strong>License Key:</strong> {{ license_key }}</p>
+      {% endif %}
+
+{% if plan != "premium" %}
+<a href="/upgrade">
+    <button>Upgrade to Premium</button>
+</a>
+{% endif %}
+
 
         {% if plan != "Premium" %}
             <a href="/upgrade" class="btn">Upgrade to Premium</a>
