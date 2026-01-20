@@ -13,6 +13,7 @@ import hashlib
 import requests
 from openai import OpenAI
 from models import db, User
+from datetime import datetime
 
 # ======================
 # APP
@@ -51,10 +52,23 @@ def load_memory():
     with open(MEMORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def enforce_subscription(user: User):
-    if not user or user.subscription != "premium":
+def enforce_subscription(user):
+    if not user:
         return False
+
+    if user.subscription != "premium":
+        return False
+
+    if not user.subscription_expires:
+        return False
+
+    if user.subscription_expires < datetime.utcnow():
+        user.subscription = "free"
+        db.session.commit()
+        return False
+
     return True
+
 
 # ======================
 # ROUTES
@@ -65,10 +79,24 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    data = load_memory()
+    email = request.args.get("email")
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return redirect("/upgrade")
+
+    expires = (
+        user.subscription_expires.strftime("%Y-%m-%d")
+        if user.subscription_expires
+        else "N/A"
+    )
+
     return render_template(
         "dashboard.html",
-        subscription=data.get("subscription", "free"),
+        email=user.email,
+        plan=user.subscription,
+        expires=expires,
+        license_key=user.license_key,
     )
 
 @app.route("/upgrade")
@@ -102,19 +130,15 @@ def payment_success():
     email = data["customer"]["email"]
     license_key = generate_license(email)
 
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        user = User(
-            email=email,
-            subscription="premium",
-            license_key=license_key,
-        )
-        db.session.add(user)
-    else:
-        user.subscription = "premium"
-        user.license_key = license_key
+   user = User.query.filter_by(email=email).first()
 
-    db.session.commit()
+if not user:
+       user = User(email=email)
+       db.session.add(user)
+
+       user.activate_premium(days=30)
+       user.license_key = generate_license(email)
+       db.session.commit()
     return render_template("success.html")
 
 @app.route("/check-premium", methods=["POST"])
@@ -181,6 +205,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
