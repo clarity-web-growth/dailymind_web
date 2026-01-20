@@ -69,18 +69,36 @@ def pay():
 def payment_success():
     return render_template("success.html")
     
+from models import User, db
+
 @app.route("/paystack/webhook", methods=["POST"])
 def paystack_webhook():
     payload = request.get_json()
 
     if payload.get("event") == "charge.success":
         email = payload["data"]["customer"]["email"]
-        amount = payload["data"]["amount"] / 100
 
-        # TEMP: log successful payment
-        print("PAYMENT SUCCESS:", email, amount)
+        license_key = generate_license(email)
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            user = User(
+                email=email,
+                license_key=license_key,
+                subscription="premium"
+            )
+            db.session.add(user)
+        else:
+            user.subscription = "premium"
+            user.license_key = license_key
+
+        db.session.commit()
+
+        print("PREMIUM ACTIVATED FOR:", email)
 
     return jsonify({"status": "ok"})
+
 
 # ======================
 # CHAT STREAM
@@ -111,6 +129,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
