@@ -127,7 +127,7 @@ email = data.get("email")
 user = User.query.filter_by(email=email).first()
 
 if not user or user.subscription != "premium":
-    return Response(
+      return Response(
         "Upgrade to Premium to continue.\n",
         content_type="text/plain"
     )
@@ -158,6 +158,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
