@@ -5,6 +5,24 @@ if (!email) {
   localStorage.setItem("email", email);
 }
 
+async function checkPremium(email) {
+  const res = await fetch("/check-premium", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+
+  const data = await res.json();
+
+  if (data.premium) {
+    localStorage.setItem("email", email);
+    alert("Premium unlocked 🎉");
+    location.reload();
+  } else {
+    alert("Payment not confirmed yet. Try again in 10 seconds.");
+  }
+}
+
 const chatBox = document.getElementById("chat-box");
 const input = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
