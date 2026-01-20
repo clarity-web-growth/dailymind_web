@@ -12,6 +12,8 @@ import json
 import requests
 from openai import OpenAI
 from models import db, User
+import hmac
+import hashlib
 
 # ======================
 # APP
@@ -105,10 +107,19 @@ def payment_success():
 
 @app.route("/paystack/webhook", methods=["POST"])
 def paystack_webhook():
-    payload = request.get_json()
+    signature = request.headers.get("x-paystack-signature")
+    payload = request.data
 
-    if payload.get("event") == "charge.success":
-        email = payload["data"]["customer"]["email"]
+    secret = os.getenv("PAYSTACK_SECRET_KEY").encode()
+    expected_signature = hmac.new(secret, payload, hashlib.sha512).hexdigest()
+
+    if signature != expected_signature:
+        return "Invalid signature", 403
+
+    event = request.get_json()
+
+    if event["event"] == "charge.success":
+        email = event["data"]["customer"]["email"]
 
         user = User.query.filter_by(email=email).first()
         if not user:
@@ -118,9 +129,10 @@ def paystack_webhook():
             user.subscription = "premium"
 
         db.session.commit()
-        print("PREMIUM ACTIVATED:", email)
+        print("✅ Premium activated for", email)
 
     return jsonify({"status": "ok"})
+
 
 
 @app.route("/check-premium", methods=["POST"])
@@ -179,6 +191,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
