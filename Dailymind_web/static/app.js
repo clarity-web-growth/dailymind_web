@@ -1,3 +1,10 @@
+let email = localStorage.getItem("email");
+
+if (!email) {
+  email = prompt("Enter your email used for payment:");
+  localStorage.setItem("email", email);
+}
+
 const chatBox = document.getElementById("chat-box");
 const input = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
@@ -18,18 +25,15 @@ sendBtn.onclick = async () => {
   appendMessage("You: " + text, "user");
   input.value = "";
 
-  const response = await fetch("/chat-stream", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text: text,
-      personality: personalitySelect.value,
-      device_id: "WEB",
-      license_key: "WEB"
-    })
-  });
+  fetch("/chat-stream", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    text: message,
+    personality: personality,
+    email: email
+  })
+});
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
