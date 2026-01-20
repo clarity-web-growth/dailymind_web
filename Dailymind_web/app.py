@@ -3,7 +3,7 @@ import os
 import json
 import hashlib
 from openai import OpenAI
-from flask import Flask, render_template
+from models import db
 
 # ======================
 # APP
@@ -13,9 +13,24 @@ app = Flask(__name__)
 # ======================
 # CONFIG
 # ======================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(BASE_DIR, "dailymind.db")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 SECRET_SALT = "DAILYMIND-2026-SECURE"
-MEMORY_FILE = "daily_mind_memory.json"
+MEMORY_FILE = os.path.join(BASE_DIR, "daily_mind_memory.json")
+
+# ======================
+# INIT DB
+# ======================
+@app.before_first_request
+def create_tables():
+    db.create_all()
 
 # ======================
 # HELPERS
@@ -54,7 +69,7 @@ def dashboard():
         last_topic=data.get("last_topic", "None"),
         subscription=data.get("subscription", "free")
     )
-    
+
 # ======================
 # CHAT STREAM (CHATGPT-LIKE)
 # ======================
@@ -62,25 +77,40 @@ def dashboard():
 def chat_stream():
     data = request.get_json()
 
+    # 🔒 License check (optional – keep if you want)
+    device_id = data.get("device_id")
+    license_key = data.get("license_key")
+
+    if not is_license_valid(device_id, license_key):
+        return jsonify({"error": "FORBIDDEN"}), 403
+
+    personality = data.get("personality", "Friend")
+    user_text = data.get("text", "")
+
     def generate():
         try:
-            with client.responses.stream(
-                model="gpt-4.1-mini",
-                input=[
+            stream = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
                     {
                         "role": "system",
-                        "content": f"You are DailyMind. Personality: {data.get('personality', 'Friend')}"
+                        "content": f"You are DailyMind. Personality: {personality}. Behave like ChatGPT."
                     },
                     {
                         "role": "user",
-                        "content": data.get("text", "")
+                        "content": user_text
                     }
                 ],
-            ) as stream:
-                for event in stream:
-                    if event.type == "response.output_text.delta":
-                        yield event.delta
-        except Exception as e:
+                temperature=0.8,
+                max_tokens=500,
+                stream=True
+            )
+
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.get("content"):
+                    yield chunk.choices[0].delta["content"]
+
+        except Exception:
             yield "\n[Server stream error]\n"
 
     return Response(
@@ -88,13 +118,12 @@ def chat_stream():
         content_type="text/plain; charset=utf-8"
     )
 
-
-
 # ======================
 # LOCAL RUN
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
