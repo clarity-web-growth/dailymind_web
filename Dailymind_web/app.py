@@ -99,6 +99,25 @@ def paystack_webhook():
 
     return jsonify({"status": "ok"})
 
+from models import User
+
+@app.route("/check-premium", methods=["POST"])
+def check_premium():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"premium": False})
+
+    user = User.query.filter_by(email=email).first()
+
+    if user and user.subscription == "premium":
+        return jsonify({
+            "premium": True,
+            "license_key": user.license_key
+        })
+
+    return jsonify({"premium": False})
 
 # ======================
 # CHAT STREAM
@@ -129,6 +148,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
