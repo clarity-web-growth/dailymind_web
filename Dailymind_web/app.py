@@ -3,6 +3,7 @@ import os, json, hashlib
 from openai import OpenAI
 from models import db
 from flask import redirect
+from models import User, db
 
 # ======================
 # APP
@@ -69,7 +70,6 @@ def pay():
 def payment_success():
     return render_template("success.html")
     
-from models import User, db
 
 @app.route("/paystack/webhook", methods=["POST"])
 def paystack_webhook():
@@ -122,6 +122,16 @@ def check_premium():
 # ======================
 # CHAT STREAM
 # ======================
+email = data.get("email")
+
+user = User.query.filter_by(email=email).first()
+
+if not user or user.subscription != "premium":
+    return Response(
+        "Upgrade to Premium to continue.\n",
+        content_type="text/plain"
+    )
+
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
     data = request.get_json()
@@ -148,6 +158,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
