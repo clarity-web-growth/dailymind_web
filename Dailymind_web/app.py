@@ -64,6 +64,10 @@ def upgrade():
 def pay():
     PAYSTACK_URL = "https://paystack.shop/pay/yzthx-tqho"
     return redirect(PAYSTACK_URL)
+    
+@app.route("/success")
+def payment_success():
+    return render_template("success.html")
 
 # ======================
 # CHAT STREAM
@@ -94,6 +98,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
