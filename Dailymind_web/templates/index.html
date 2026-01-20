@@ -29,13 +29,33 @@
     <button id="send-btn">Send</button>
   </div>
   
-<button id="upgradeBtn" onclick="goToPayment()">
+<button
+  id="upgradeBtn"
+  style="
+    width: 100%;
+    background: #22c55e;
+    color: black;
+    font-weight: bold;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    font-size: 18px;
+    margin-top: 12px;
+  "
+>
   Upgrade to Premium
 </button>
+
+<script>
+  document.getElementById("upgradeBtn").addEventListener("click", function () {
+    window.location.href = "https://paystack.shop/pay/yzthx-tqho";
+  });
+</script>
 
   <script src="/static/app.js"></script>
 </body>
 </html>
+
 
 
 
