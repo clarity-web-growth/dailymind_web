@@ -1,9 +1,9 @@
 flask
-flask-sqlalchemy
-requests
+flask_sqlalchemy
 openai
+requests
 gunicorn
-python-dotenv
+
 
 
 
