@@ -3,7 +3,9 @@ import os
 import json
 import hashlib
 from openai import OpenAI
-from models import db
+from dotenv import load_dotenv
+
+from models import db, User
 
 # ======================
 # APP
@@ -20,13 +22,14 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
+load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 SECRET_SALT = "DAILYMIND-2026-SECURE"
-MEMORY_FILE = os.path.join(BASE_DIR, "daily_mind_memory.json")
+MEMORY_FILE = "daily_mind_memory.json"
 
 # ======================
-# INIT DB
+# DB INIT
 # ======================
 @app.before_first_request
 def create_tables():
@@ -40,11 +43,7 @@ def generate_license(device_id):
     return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
 
 def is_license_valid(device_id, license_key):
-    return (
-        device_id
-        and license_key
-        and license_key.strip().upper() == generate_license(device_id)
-    )
+    return license_key == generate_license(device_id)
 
 def load_memory():
     if not os.path.exists(MEMORY_FILE):
@@ -67,49 +66,48 @@ def dashboard():
         conversation_count=data.get("conversation_count", 0),
         personality=data.get("last_personality", "Unknown"),
         last_topic=data.get("last_topic", "None"),
-        subscription=data.get("subscription", "free")
+        subscription=data.get("subscription", "free"),
     )
 
 # ======================
-# CHAT STREAM (CHATGPT-LIKE)
+# CHAT STREAM
 # ======================
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
     data = request.get_json()
-
-    # 🔒 License check (optional – keep if you want)
     device_id = data.get("device_id")
     license_key = data.get("license_key")
 
-    if not is_license_valid(device_id, license_key):
-        return jsonify({"error": "FORBIDDEN"}), 403
+    user = User.query.filter_by(device_id=device_id).first()
 
-    personality = data.get("personality", "Friend")
-    user_text = data.get("text", "")
+    if not user:
+        user = User(device_id=device_id)
+        db.session.add(user)
+        db.session.commit()
+
+    if license_key and is_license_valid(device_id, license_key):
+        user.subscription = "premium"
+        user.license_key = license_key
+        db.session.commit()
 
     def generate():
         try:
-            stream = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
+            with client.responses.stream(
+                model="gpt-4.1-mini",
+                input=[
                     {
                         "role": "system",
-                        "content": f"You are DailyMind. Personality: {personality}. Behave like ChatGPT."
+                        "content": f"You are DailyMind. Personality: {data.get('personality', 'Friend')}"
                     },
                     {
                         "role": "user",
-                        "content": user_text
+                        "content": data.get("text", "")
                     }
                 ],
-                temperature=0.8,
-                max_tokens=500,
-                stream=True
-            )
-
-            for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.get("content"):
-                    yield chunk.choices[0].delta["content"]
-
+            ) as stream:
+                for event in stream:
+                    if event.type == "response.output_text.delta":
+                        yield event.delta
         except Exception:
             yield "\n[Server stream error]\n"
 
@@ -119,10 +117,12 @@ def chat_stream():
     )
 
 # ======================
-# LOCAL RUN
+# RUN
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
 
 
