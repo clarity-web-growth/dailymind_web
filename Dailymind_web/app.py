@@ -2,6 +2,7 @@ from flask import Flask, request, Response, render_template, stream_with_context
 import os, json, hashlib
 from openai import OpenAI
 from models import db
+from flask import redirect
 
 # ======================
 # APP
@@ -58,6 +59,11 @@ def dashboard():
 @app.route("/upgrade")
 def upgrade():
     return render_template("upgrade.html")
+    
+@app.route("/pay")
+def pay():
+    PAYSTACK_URL = "https://paystack.shop/pay/yzthx-tqho"
+    return redirect(PAYSTACK_URL)
 
 # ======================
 # CHAT STREAM
@@ -88,6 +94,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
