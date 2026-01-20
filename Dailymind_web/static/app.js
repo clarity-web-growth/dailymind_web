@@ -44,3 +44,10 @@ sendBtn.onclick = async () => {
   }
 };
 
+function goToPayment() {
+  window.open(
+    "https://paystack.shop/pay/yzthx-tqho",
+    "_blank"
+  );
+}
+
