@@ -49,3 +49,15 @@ button {
   font-size: 16px;
   font-weight: bold;
 }
+
+#upgradeBtn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: #22c55e;
+  color: black;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
