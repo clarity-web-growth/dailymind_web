@@ -65,14 +65,50 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    data = load_memory()
+    email = request.args.get("email")
+
+    if not email:
+        return redirect("/")
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return render_template(
+            "dashboard.html",
+            email=email,
+            plan="Free",
+            status="No account",
+            expires=None
+        )
+
+    # Enforce expiry before showing
+    if (
+        user.subscription == "premium"
+        and user.subscription_expires
+        and user.subscription_expires < datetime.utcnow()
+    ):
+        user.subscription = "free"
+        user.subscription_expires = None
+        db.session.commit()
+
+    plan = user.subscription.capitalize()
+
+    status = "Active" if user.subscription == "premium" else "Free"
+
+    expires = (
+        user.subscription_expires.strftime("%Y-%m-%d")
+        if user.subscription_expires
+        else None
+    )
+
     return render_template(
         "dashboard.html",
-        conversation_count=data.get("conversation_count", 0),
-        personality=data.get("last_personality", "Friend"),
-        last_topic=data.get("last_topic", "None"),
-        subscription=data.get("subscription", "free"),
+        email=user.email,
+        plan=plan,
+        status=status,
+        expires=expires
     )
+
 
 
 @app.route("/upgrade")
@@ -119,38 +155,28 @@ def payment_success():
 
 @app.route("/paystack/webhook", methods=["POST"])
 def paystack_webhook():
-    signature = request.headers.get("x-paystack-signature")
-    payload = request.data
+    payload = request.get_json()
 
-    secret = os.getenv("PAYSTACK_SECRET_KEY").encode()
-    expected_signature = hmac.new(secret, payload, hashlib.sha512).hexdigest()
+    if payload.get("event") == "charge.success":
+        email = payload["data"]["customer"]["email"]
 
-    if signature != expected_signature:
-        return "Invalid signature", 403
+        user = User.query.filter_by(email=email).first()
 
-    event = request.get_json()
+        if user:
+            user.subscription = "premium"
+            user.subscription_expires = datetime.utcnow() + timedelta(days=30)
+        else:
+            user = User(
+                email=email,
+                subscription="premium",
+                subscription_expires=datetime.utcnow() + timedelta(days=30),
+            )
+            db.session.add(user)
 
-    if event["event"] == "charge.success":
-    email = event["data"]["customer"]["email"]
-
-    expires_at = datetime.utcnow() + timedelta(days=30)
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        user = User(
-            email=email,
-            subscription="premium",
-            subscription_expires=expires_at
-        )
-        db.session.add(user)
-    else:
-        user.subscription = "premium"
-        user.subscription_expires = expires_at
-
-    db.session.commit()
+        db.session.commit()
+        print("PREMIUM ACTIVATED FOR:", email)
 
     return jsonify({"status": "ok"})
-
 
 
 @app.route("/check-premium", methods=["POST"])
@@ -225,6 +251,7 @@ if not user or user.subscription != "premium":
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
