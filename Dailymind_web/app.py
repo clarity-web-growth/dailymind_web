@@ -68,6 +68,19 @@ def pay():
 @app.route("/success")
 def payment_success():
     return render_template("success.html")
+    
+@app.route("/paystack/webhook", methods=["POST"])
+def paystack_webhook():
+    payload = request.get_json()
+
+    if payload.get("event") == "charge.success":
+        email = payload["data"]["customer"]["email"]
+        amount = payload["data"]["amount"] / 100
+
+        # TEMP: log successful payment
+        print("PAYMENT SUCCESS:", email, amount)
+
+    return jsonify({"status": "ok"})
 
 # ======================
 # CHAT STREAM
@@ -98,6 +111,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
