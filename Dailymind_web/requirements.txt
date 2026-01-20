@@ -1,5 +1,8 @@
 flask
+flask-sqlalchemy
 gunicorn
 openai
-python-dotenv   
+python-dotenv
+  
+
 
