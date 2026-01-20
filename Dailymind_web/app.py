@@ -118,6 +118,21 @@ def check_premium():
         })
 
     return jsonify({"premium": False})
+    
+@app.route("/verify-payment", methods=["POST"])
+def verify_payment():
+    data = request.get_json()
+    email = data.get("email")
+
+    # 1. Call Paystack verify API
+    # 2. If successful:
+    user = User.query.filter_by(email=email).first()
+    if user:
+        user.subscription = "premium"
+        db.session.commit()
+        return jsonify({"status": "success"})
+
+    return jsonify({"status": "failed"}), 400
 
 # ======================
 # CHAT STREAM
@@ -167,6 +182,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
