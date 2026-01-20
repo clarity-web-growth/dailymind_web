@@ -4,59 +4,65 @@
     <title>DailyMind Dashboard</title>
     <style>
         body {
+            background: #0b1220;
+            color: white;
             font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: #e5e7eb;
             padding: 40px;
         }
         .card {
-            background: #020617;
+            max-width: 420px;
+            margin: auto;
+            background: #111a2e;
+            padding: 25px;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 0 20px rgba(0,0,0,.4);
         }
-        h1 {
-            margin-bottom: 20px;
-        }
-        .label {
-            color: #94a3b8;
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 14px;
         }
-        .value {
-            font-size: 20px;
+        .premium {
+            background: #22c55e;
+            color: black;
+        }
+        .free {
+            background: #374151;
+        }
+        .btn {
+            display: block;
+            margin-top: 20px;
+            padding: 12px;
+            text-align: center;
+            background: #22c55e;
+            color: black;
+            border-radius: 10px;
+            text-decoration: none;
             font-weight: bold;
         }
     </style>
 </head>
+
 <body>
+    <div class="card">
+        <h2>🧠 DailyMind Dashboard</h2>
 
-<h1>🧠 DailyMind Dashboard</h1>
+        <p><strong>Email:</strong> {{ email }}</p>
+        <p>
+            <strong>Plan:</strong>
+            <span class="badge {{ 'premium' if plan == 'Premium' else 'free' }}">
+                {{ plan }}
+            </span>
+        </p>
 
-<div class="card">
-    <div class="label">API Status</div>
-    <div class="value">Running ✅</div>
-</div>
+        {% if expires %}
+            <p><strong>Expires:</strong> {{ expires }}</p>
+        {% endif %}
 
-<div class="card">
-    <div class="label">Total Conversations</div>
-    <div class="value">{{ conversation_count }}</div>
-</div>
-
-<div class="card">
-    <div class="label">Last Personality</div>
-    <div class="value">{{ personality }}</div>
-</div>
-
-<div class="card">
-    <div class="label">Last Topic</div>
-    <div class="value">{{ last_topic }}</div>
-</div>
-
-<div class="card">
-    <div class="label">Subscription</div>
-    <div class="value">{{ subscription }}</div>
-</div>
-
+        {% if plan != "Premium" %}
+            <a href="/upgrade" class="btn">Upgrade to Premium</a>
+        {% else %}
+            <a href="/pay" class="btn">Renew Subscription</a>
+        {% endif %}
+    </div>
 </body>
 </html>
