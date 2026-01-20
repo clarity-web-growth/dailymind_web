@@ -14,6 +14,8 @@ from openai import OpenAI
 from models import db, User
 import hmac
 import hashlib
+from datetime import datetime, timedelta
+from datetime import datetime
 
 # ======================
 # APP
@@ -42,6 +44,16 @@ def load_memory():
         return {}
     with open(MEMORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
+
+def enforce_subscription(user):
+    if (
+        user.subscription == "premium"
+        and user.subscription_expires
+        and user.subscription_expires < datetime.utcnow()
+    ):
+        user.subscription = "free"
+        user.subscription_expires = None
+        db.session.commit()
 
 # ======================
 # ROUTES
@@ -119,17 +131,23 @@ def paystack_webhook():
     event = request.get_json()
 
     if event["event"] == "charge.success":
-        email = event["data"]["customer"]["email"]
+    email = event["data"]["customer"]["email"]
 
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(email=email, subscription="premium")
-            db.session.add(user)
-        else:
-            user.subscription = "premium"
+    expires_at = datetime.utcnow() + timedelta(days=30)
 
-        db.session.commit()
-        print("✅ Premium activated for", email)
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(
+            email=email,
+            subscription="premium",
+            subscription_expires=expires_at
+        )
+        db.session.add(user)
+    else:
+        user.subscription = "premium"
+        user.subscription_expires = expires_at
+
+    db.session.commit()
 
     return jsonify({"status": "ok"})
 
@@ -141,7 +159,19 @@ def check_premium():
     email = data.get("email")
 
     user = User.query.filter_by(email=email).first()
-    return jsonify({"premium": bool(user and user.subscription == "premium")})
+    if not user:
+        return jsonify({"premium": False})
+
+    enforce_subscription(user)
+
+    if user.subscription == "premium":
+        return jsonify({
+            "premium": True,
+            "expires": user.subscription_expires.isoformat()
+        })
+
+    return jsonify({"premium": False})
+
 
 
 # ======================
@@ -152,12 +182,16 @@ def chat_stream():
     data = request.get_json()
     email = data.get("email")
 
-    user = User.query.filter_by(email=email).first()
-    if not user or user.subscription != "premium":
-        return Response(
-            "Upgrade to Premium to continue.\n",
-            content_type="text/plain",
-        )
+   user = User.query.filter_by(email=email).first()
+
+if user:
+    enforce_subscription(user)
+
+if not user or user.subscription != "premium":
+    return Response(
+        "Upgrade to Premium to continue.\n",
+        content_type="text/plain"
+    )
 
     def generate():
         try:
@@ -191,6 +225,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
