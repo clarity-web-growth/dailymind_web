@@ -122,27 +122,32 @@ def check_premium():
 # ======================
 # CHAT STREAM
 # ======================
-email = data.get("email")
-
-user = User.query.filter_by(email=email).first()
-
-if not user or user.subscription != "premium":
-      return Response(
-        "Upgrade to Premium to continue.\n",
-        content_type="text/plain"
-    )
-
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
     data = request.get_json()
+
+    email = data.get("email")
+    user = User.query.filter_by(email=email).first()
+
+    if not user or user.subscription != "premium":
+        return Response(
+            "Upgrade to Premium to continue.\n",
+            content_type="text/plain"
+        )
 
     def generate():
         try:
             with client.responses.stream(
                 model="gpt-4.1-mini",
                 input=[
-                    {"role": "system", "content": f"You are DailyMind. Personality: {data.get('personality', 'Friend')}"},
-                    {"role": "user", "content": data.get("text", "")}
+                    {
+                        "role": "system",
+                        "content": f"You are DailyMind. Personality: {data.get('personality', 'Friend')}"
+                    },
+                    {
+                        "role": "user",
+                        "content": data.get("text", "")
+                    }
                 ],
             ) as stream:
                 for event in stream:
@@ -151,13 +156,18 @@ def chat_stream():
         except Exception:
             yield "\n[Server stream error]\n"
 
-    return Response(stream_with_context(generate()), content_type="text/plain")
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/plain"
+    )
+
 
 # ======================
 # LOCAL
 # ======================
 if __name__ == "__main__":
     app.run()
+
 
 
 
