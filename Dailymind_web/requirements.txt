@@ -1,7 +1,11 @@
 flask
 flask-sqlalchemy
+requests
 openai
 gunicorn
+python-dotenv
+
+
 
 
 
