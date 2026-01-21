@@ -133,6 +133,39 @@ def check_premium():
         })
 
     return jsonify({"premium": False})
+    
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap():
+    pages = []
+    base_url = "https://dailymind-web.onrender.com"
+
+    pages.append({
+        "loc": f"{base_url}/",
+        "priority": "1.0"
+    })
+    pages.append({
+        "loc": f"{base_url}/dashboard",
+        "priority": "0.9"
+    })
+    pages.append({
+        "loc": f"{base_url}/upgrade",
+        "priority": "0.8"
+    })
+
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>'
+    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+
+    for page in pages:
+        sitemap_xml += f"""
+        <url>
+            <loc>{page['loc']}</loc>
+            <priority>{page['priority']}</priority>
+        </url>
+        """
+
+    sitemap_xml += "</urlset>"
+
+    return Response(sitemap_xml, mimetype="application/xml")
 
 # ======================
 # CHAT STREAM (PREMIUM GATED)
@@ -180,6 +213,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
