@@ -117,6 +117,14 @@ def payment_success():
 @app.route("/pricing")
 def pricing():
     return render_template("pricing.html")
+    
+@app.route("/blog")
+def blog():
+    return render_template("blog.html")
+
+@app.route("/blog/why-mental-clarity-matters")
+def blog_post():
+    return render_template("blog_mental_clarity.html")
 
 # ======================
 # CHECK PREMIUM (FRONTEND)
@@ -217,6 +225,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
