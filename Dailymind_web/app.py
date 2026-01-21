@@ -113,6 +113,10 @@ def payment_success():
     db.session.commit()
 
     return render_template("success.html")
+    
+@app.route("/pricing")
+def pricing():
+    return render_template("pricing.html")
 
 # ======================
 # CHECK PREMIUM (FRONTEND)
@@ -213,6 +217,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
