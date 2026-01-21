@@ -161,12 +161,17 @@ def chat_stream():
     data = request.get_json()
     email = data.get("email")
 
-    user = User.query.filter_by(email=email).first()
-    if not user or user.subscription != "premium":
-        return Response(
-            "Upgrade to Premium to continue.\n",
-            content_type="text/plain",
-        )
+   # PSEUDO LOGIC — adapt to your code
+
+email = data.get("email")
+is_free = data.get("is_free", False)
+
+user = get_user(email)
+
+if not user.is_premium:
+    # ALLOW free chat
+    pass  # DO NOT BLOCK HERE
+
 
     def generate():
         try:
@@ -226,6 +231,7 @@ def chat():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
