@@ -13,6 +13,7 @@ import hashlib
 import requests
 from openai import OpenAI
 from models import db, User
+from datetime import date
 
 # ======================
 # APP
@@ -193,11 +194,39 @@ def chat_stream():
         content_type="text/plain",
     )
 
+
+FREE_LIMIT = 10
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    user = get_current_user()  # however you fetch user
+
+    today = date.today()
+
+    # Reset daily count
+    if user.last_used != today:
+        user.message_count = 0
+        user.last_used = today
+
+    # Block free users
+    if user.subscription == "free" and user.message_count >= FREE_LIMIT:
+        return jsonify({
+            "error": "Free limit reached",
+            "upgrade": True
+        }), 403
+
+    # Allow message
+    user.message_count += 1
+    db.session.commit()
+
+    # Continue AI response...
+
 # ======================
 # LOCAL
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
