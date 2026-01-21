@@ -72,7 +72,45 @@
 </a>
 {% endif %}
 
- </div>  
+ </div> 
+    
+<script>
+async function refreshSubscription() {
+  const email = "{{ email }}";
+  if (!email) return;
+
+  try {
+    const res = await fetch("/check-premium", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await res.json();
+
+    if (data.premium) {
+      // Update plan
+      const planEl = document.getElementById("plan");
+      if (planEl) planEl.innerText = "Premium";
+
+      // Update expiry
+      const expEl = document.getElementById("expires");
+      if (expEl && data.expires) {
+        expEl.innerText = new Date(data.expires).toDateString();
+      }
+
+      // Remove upgrade button
+      const btn = document.getElementById("upgrade-btn");
+      if (btn) btn.remove();
+    }
+  } catch (e) {
+    console.error("Subscription refresh failed", e);
+  }
+}
+
+// Run once page loads
+setTimeout(refreshSubscription, 1000);
+</script>
 
 </body>
 </html>
