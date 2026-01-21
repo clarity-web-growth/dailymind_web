@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  
-<meta name="google-site-verification" content="wyhXdZB3Cci81KhL_0ZTXwGrt0DC0Vsa14tP4ucqR2s" />
-  
+
+  <!-- Google verification -->
+  <meta name="google-site-verification" content="wyhXdZB3Cci81KhL_0ZTXwGrt0DC0Vsa14tP4ucqR2s" />
+
   <link rel="canonical" href="https://dailymind-web.onrender.com/" />
 
-  <!-- ✅ STEP 2: SEO META (CORRECT PLACE) -->
+  <!-- ✅ SEO META -->
   <title>DailyMind – Private AI Mentor for Clarity & Emotional Balance</title>
 
   <meta name="description" content="DailyMind is a private AI mentor for clarity, reflection, and emotional balance. Think clearly. Speak freely. No judgment, no pressure." />
@@ -22,6 +23,33 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/static/style.css" />
+
+  <!-- Small inline styles for upgrade button -->
+  <style>
+    .chat-wrapper {
+      position: relative;
+      max-width: 800px;
+      margin: 40px auto;
+    }
+
+    .top-upgrade-btn {
+      position: absolute;
+      top: -45px;
+      right: 0;
+      background: #22c55e;
+      color: #000;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .top-upgrade-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
 </head>
 
 <body>
@@ -54,7 +82,7 @@
       no judgment, no pressure.
     </p>
 
-    <a href="/dashboard" style="
+    <a href="#chat" style="
       display: inline-block;
       background: #22c55e;
       color: black;
@@ -70,7 +98,7 @@
 </section>
 
 <!-- =========================
-     ✅ STEP 4: SEO TEXT (VISIBLE)
+     SEO CONTENT
 ========================= -->
 <section class="seo-content" style="
   max-width: 900px;
@@ -104,36 +132,40 @@
 </section>
 
 <!-- =========================
-     APP UI (OPTIONAL DEMO)
+     CHAT AREA (MAIN APP)
 ========================= -->
-<div class="container">
-  <h1>🧠 DailyMind</h1>
-  <p class="tagline">Think clearly. Speak freely.</p>
+<a id="chat"></a>
 
-  <select id="personality">
-    <option>Friend</option>
-    <option>Coach</option>
-    <option>Philosopher</option>
-  </select>
+<div class="chat-wrapper">
 
-  <div id="chat-box" class="chat-box"></div>
+  <!-- ✅ SMALL UPGRADE BUTTON (TOP RIGHT) -->
+  <button class="top-upgrade-btn" onclick="openPricing()">
+    Upgrade
+  </button>
 
-  <input id="message-input" type="text" placeholder="Type your message..." />
-  <button id="send-btn">Send</button>
-</div>
+  <div class="container">
+    <h1>🧠 DailyMind</h1>
+    <p class="tagline">Think clearly. Speak freely.</p>
 
-<!-- Upgrade -->
-<div style="text-align:center; margin:40px;">
-  <a href="/upgrade">
-    <button style="padding:12px 20px; font-weight:600;">
-      Upgrade to Premium
-    </button>
-  </a>
+    <select id="personality">
+      <option>Friend</option>
+      <option>Coach</option>
+      <option>Philosopher</option>
+    </select>
+
+    <div id="chat-box" class="chat-box"></div>
+
+    <input id="message-input" type="text" placeholder="Type your message..." />
+    <button id="send-btn">Send</button>
+  </div>
+
 </div>
 
 <script src="/static/app.js"></script>
 </body>
 </html>
+
+
 
 
 
