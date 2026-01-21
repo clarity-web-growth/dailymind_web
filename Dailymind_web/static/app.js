@@ -3,7 +3,14 @@
 ************************/
 const FREE_LIMIT = 10;
 
+// Email (free users get a temp one)
 let email = localStorage.getItem("email");
+if (!email) {
+  email = "free_user_" + Date.now();
+  localStorage.setItem("email", email);
+}
+
+// Message count & premium
 let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
 let isPremium = localStorage.getItem("isPremium") === "true";
 
@@ -27,6 +34,8 @@ function appendMessage(text, className) {
 }
 
 function lockChat() {
+  if (input.disabled) return; // prevent double-lock
+
   input.disabled = true;
   sendBtn.disabled = true;
 
@@ -47,6 +56,7 @@ function showUpgradeInline() {
     </button>
   `;
   chatBox.appendChild(upgradeDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 /***********************
@@ -70,7 +80,7 @@ sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
-  // Free limit check
+  // ⛔ FREE LIMIT CHECK
   if (!isPremium && messageCount >= FREE_LIMIT) {
     lockChat();
     return;
@@ -82,14 +92,15 @@ sendBtn.onclick = async () => {
   messageCount++;
   localStorage.setItem("messageCount", messageCount);
 
-  // Send message to backend
+  // Send message
   const response = await fetch("/chat-stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       text,
       personality: personalitySelect.value,
-      email
+      email,
+      is_free: !isPremium
     })
   });
 
@@ -105,14 +116,14 @@ sendBtn.onclick = async () => {
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // Lock after response if limit reached
+  // Lock AFTER response if limit hit
   if (!isPremium && messageCount >= FREE_LIMIT) {
     lockChat();
   }
 };
 
 /***********************
-  PREMIUM CHECK (OPTIONAL)
+  PREMIUM CHECK
 ************************/
 async function checkPremium(email) {
   const res = await fetch("/check-premium", {
@@ -131,4 +142,11 @@ async function checkPremium(email) {
   } else {
     alert("Payment not confirmed yet. Please try again.");
   }
+}
+
+/***********************
+  AUTO LOCK ON LOAD
+************************/
+if (!isPremium && messageCount >= FREE_LIMIT) {
+  lockChat();
 }
