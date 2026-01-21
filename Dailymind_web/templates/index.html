@@ -2,13 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>DailyMind</title>
+
+  <!-- ✅ STEP 2: SEO META (CORRECT PLACE) -->
+  <title>DailyMind – Private AI Mentor for Clarity & Emotional Balance</title>
+
+  <meta name="description" content="DailyMind is a private AI mentor for clarity, reflection, and emotional balance. Think clearly. Speak freely. No judgment, no pressure." />
+  <meta name="keywords" content="AI mentor, AI journaling app, mental clarity app, emotional balance AI, self reflection AI, stoic AI coach" />
+  <meta name="author" content="DailyMind" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="DailyMind – Private AI Mentor for Clarity" />
+  <meta property="og:description" content="A private AI mentor for clarity, reflection, and emotional balance. No judgment. No pressure." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dailymind-web.onrender.com" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
+
 <body>
-  <!-- =========================
-     DAILY MIND LANDING
+
+<!-- =========================
+     HERO SECTION
 ========================= -->
 <section style="
   min-height: 100vh;
@@ -22,28 +37,15 @@
 ">
 
   <div style="max-width: 520px;">
-
-    <h1 style="
-      font-size: 2.4rem;
-      font-weight: 700;
-      margin-bottom: 12px;
-    ">
+    <h1 style="font-size: 2.4rem; font-weight: 700; margin-bottom: 12px;">
       🧠 DailyMind
     </h1>
 
-    <p style="
-      font-size: 1.2rem;
-      opacity: 0.85;
-      margin-bottom: 18px;
-    ">
+    <p style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 18px;">
       Think clearly. Speak freely.
     </p>
 
-    <p style="
-      font-size: 1rem;
-      opacity: 0.7;
-      margin-bottom: 28px;
-    ">
+    <p style="font-size: 1rem; opacity: 0.7; margin-bottom: 28px;">
       A private AI mentor for clarity, reflection, and emotional balance —
       no judgment, no pressure.
     </p>
@@ -60,47 +62,72 @@
     ">
       Start Talking
     </a>
-
   </div>
-
 </section>
 
+<!-- =========================
+     ✅ STEP 4: SEO TEXT (VISIBLE)
+========================= -->
+<section class="seo-content" style="
+  max-width: 900px;
+  margin: 80px auto;
+  padding: 0 20px;
+  color: #444;
+  line-height: 1.7;
+  font-size: 15px;
+">
 
-  <div class="container">
-    <h1>🧠 DailyMind</h1>
-    <p class="tagline">Think clearly. Speak freely.</p>
+  <h2>What is DailyMind?</h2>
+  <p>
+    DailyMind is a private AI mentor designed to help individuals think clearly,
+    reflect deeply, and improve emotional balance. It offers a calm, judgment-free
+    space for meaningful conversation and self-reflection.
+  </p>
 
-    <select id="personality">
-      <option>Friend</option>
-      <option>Coach</option>
-      <option>Philosopher</option>
-    </select>
+  <h2>Why use a private AI mentor?</h2>
+  <p>
+    Unlike public chatbots or social platforms, DailyMind focuses on privacy,
+    clarity, and thoughtful responses. It is not therapy — it is a reflection
+    and mental clarity tool built for everyday use.
+  </p>
 
-    <div id="chat-box" class="chat-box"></div>
+  <h2>Who is DailyMind for?</h2>
+  <p>
+    DailyMind is for anyone seeking mental clarity, emotional awareness,
+    or a quiet place to think. Whether you are journaling, reflecting,
+    or simply talking things through, DailyMind supports calm thinking.
+  </p>
+</section>
 
-    <input
-      id="message-input"
-      type="text"
-      placeholder="Type your message..."
-    />
+<!-- =========================
+     APP UI (OPTIONAL DEMO)
+========================= -->
+<div class="container">
+  <h1>🧠 DailyMind</h1>
+  <p class="tagline">Think clearly. Speak freely.</p>
 
-    <button id="send-btn">Send</button>
-  </div>
-  
-<a href="/upgrade">
-    <button>Upgrade to Premium</button>
-</a>
+  <select id="personality">
+    <option>Friend</option>
+    <option>Coach</option>
+    <option>Philosopher</option>
+  </select>
 
+  <div id="chat-box" class="chat-box"></div>
 
+  <input id="message-input" type="text" placeholder="Type your message..." />
+  <button id="send-btn">Send</button>
+</div>
 
+<!-- Upgrade -->
+<div style="text-align:center; margin:40px;">
+  <a href="/upgrade">
+    <button style="padding:12px 20px; font-weight:600;">
+      Upgrade to Premium
+    </button>
+  </a>
+</div>
 
-<script>
-  document.getElementById("upgradeBtn").addEventListener("click", function () {
-    window.location.href = "https://paystack.shop/pay/yzthx-tqho";
-  });
-</script>
-
-  <script src="/static/app.js"></script>
+<script src="/static/app.js"></script>
 </body>
 </html>
 
