@@ -1,26 +1,23 @@
-// ===============================
-// EMAIL HANDLING
-// ===============================
+/***********************
+  USER STATE
+************************/
+const FREE_LIMIT = 10;
+
 let email = localStorage.getItem("email");
+let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
+let isPremium = localStorage.getItem("isPremium") === "true";
 
-if (!email) {
-  email = prompt("Enter your email (used for payment):");
-  if (email) {
-    localStorage.setItem("email", email);
-  }
-}
-
-// ===============================
-// ELEMENTS
-// ===============================
+/***********************
+  DOM ELEMENTS
+************************/
 const chatBox = document.getElementById("chat-box");
 const input = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
 const personalitySelect = document.getElementById("personality");
 
-// ===============================
-// HELPERS
-// ===============================
+/***********************
+  UI HELPERS
+************************/
 function appendMessage(text, className) {
   const div = document.createElement("div");
   div.className = className;
@@ -29,62 +26,73 @@ function appendMessage(text, className) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function showUpgradeBox() {
-  const box = document.createElement("div");
-  box.className = "upgrade-box";
-  box.innerHTML = `
-    <strong>Free limit reached 🚫</strong><br/>
-    Upgrade to Premium for unlimited conversations.<br/>
-    <a href="/upgrade">Upgrade to Premium →</a>
-  `;
-  chatBox.appendChild(box);
-  chatBox.scrollTop = chatBox.scrollHeight;
+function lockChat() {
+  input.disabled = true;
+  sendBtn.disabled = true;
+
+  appendMessage(
+    "🔒 Free limit reached. Upgrade to Premium to continue chatting.",
+    "system"
+  );
+
+  showUpgradeInline();
 }
 
-// ===============================
-// SEND MESSAGE
-// ===============================
+function showUpgradeInline() {
+  const upgradeDiv = document.createElement("div");
+  upgradeDiv.className = "upgrade-box";
+  upgradeDiv.innerHTML = `
+    <button onclick="openPricing()" class="upgrade-btn">
+      🚀 Upgrade to Premium
+    </button>
+  `;
+  chatBox.appendChild(upgradeDiv);
+}
+
+/***********************
+  PAYMENT / UPGRADE
+************************/
+function openPricing() {
+  window.location.href = "/pricing";
+}
+
+function goToPayment() {
+  window.open(
+    "https://paystack.shop/pay/yzthx-tqho",
+    "_blank"
+  );
+}
+
+/***********************
+  CHAT HANDLER
+************************/
 sendBtn.onclick = async () => {
-  const message = input.value.trim();
-  if (!message) return;
+  const text = input.value.trim();
+  if (!text) return;
 
-  const personality = personalitySelect.value;
+  // Free limit check
+  if (!isPremium && messageCount >= FREE_LIMIT) {
+    lockChat();
+    return;
+  }
 
-  appendMessage("You: " + message, "user");
+  appendMessage("You: " + text, "user");
   input.value = "";
 
-  let response;
+  messageCount++;
+  localStorage.setItem("messageCount", messageCount);
 
-  try {
-    response = await fetch("/chat-stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: message,
-        personality: personality,
-        email: email
-      })
-    });
-  } catch (err) {
-    appendMessage("Connection error. Try again.", "bot");
-    return;
-  }
+  // Send message to backend
+  const response = await fetch("/chat-stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text,
+      personality: personalitySelect.value,
+      email
+    })
+  });
 
-  // 🚫 FREE LIMIT HIT
-  if (response.status === 403) {
-    showUpgradeBox();
-    return;
-  }
-
-  // ⚠️ OTHER ERRORS
-  if (!response.ok || !response.body) {
-    appendMessage("Server error. Please retry.", "bot");
-    return;
-  }
-
-  // ===============================
-  // STREAM RESPONSE
-  // ===============================
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
 
@@ -96,12 +104,17 @@ sendBtn.onclick = async () => {
     chatBox.lastChild.textContent += decoder.decode(value);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
+
+  // Lock after response if limit reached
+  if (!isPremium && messageCount >= FREE_LIMIT) {
+    lockChat();
+  }
 };
 
-// ===============================
-// PAYMENT HELPERS
-// ===============================
-async function checkPremium() {
+/***********************
+  PREMIUM CHECK (OPTIONAL)
+************************/
+async function checkPremium(email) {
   const res = await fetch("/check-premium", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -111,19 +124,11 @@ async function checkPremium() {
   const data = await res.json();
 
   if (data.premium) {
-    alert("Premium unlocked 🎉");
+    localStorage.setItem("isPremium", "true");
+    localStorage.removeItem("messageCount");
+    alert("🎉 Premium unlocked!");
     location.reload();
   } else {
-    alert("Payment not confirmed yet. Please wait a moment.");
+    alert("Payment not confirmed yet. Please try again.");
   }
 }
-
-function goToPayment() {
-  window.open(
-    "https://paystack.shop/pay/yzthx-tqho",
-    "_blank"
-  );
-}
-
-}
-
