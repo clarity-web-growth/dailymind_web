@@ -55,30 +55,16 @@
       {% endif %}
 
 {% if plan|lower != "premium" %}
-<button class="btn" onclick="upgradeWithEmail()">
+<a href="/pay" class="btn">
   Upgrade to Premium
-</button>
+</a>
 {% else %}
-<a href="/pay" class="btn">Renew Subscription</a>
+<a href="/pay" class="btn">
+  Renew Subscription
+</a>
 {% endif %}
 
-    </div>
-    <script>
-  function upgradeWithEmail() {
-    const email = prompt("Enter your email used for payment:");
-
-    if (!email) {
-      alert("Email is required.");
-      return;
-    }
-
-    // Save email for later use
-    localStorage.setItem("dailymind_email", email);
-
-    // Redirect to payment
-    window.location.href = "/pay";
-  }
-</script>
+ </div>  
 
 </body>
 </html>
