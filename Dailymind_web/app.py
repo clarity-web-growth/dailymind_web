@@ -125,6 +125,10 @@ def blog():
 @app.route("/blog/why-mental-clarity-matters")
 def blog_post():
     return render_template("blog_mental_clarity.html")
+    
+@app.route("/sitemap.xml")
+def sitemap():
+    return app.send_static_file("sitemap.xml")
 
 # ======================
 # CHECK PREMIUM (FRONTEND)
@@ -225,6 +229,7 @@ def chat_stream():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
