@@ -46,17 +46,25 @@
     <div class="card">
        <h2>DailyMind Dashboard</h2>
 
-         <p><strong>Email:</strong> {{ email }}</p>
-         <p><strong>Plan:</strong> {{ plan|capitalize }}</p>
-         <p><strong>Expires:</strong> {{ expires }}</p>
+        <p><strong>Email:</strong> {{ email }}</p>
+
+<p>
+  <strong>Plan:</strong>
+  <span id="plan">{{ plan|capitalize }}</span>
+</p>
+
+<p>
+  <strong>Expires:</strong>
+  <span id="expires">{{ expires }}</span>
+</p>
+
 
       {% if license_key %}
       <p><strong>License Key:</strong> {{ license_key }}</p>
       {% endif %}
 
 {% if plan|lower != "premium" %}
-<a href="/pay" class="btn">
-  Upgrade to Premium
+<a href="/pay" class="btn" id="upgrade-btn">Upgrade to Premium</a>
 </a>
 {% else %}
 <a href="/pay" class="btn">
@@ -69,3 +77,28 @@
 </body>
 </html>
 
+<script>
+  const email = "{{ email }}";
+
+  async function refreshSubscription() {
+    const res = await fetch("/check-premium", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await res.json();
+
+    if (data.premium) {
+      document.getElementById("plan").innerText = "Premium";
+      document.getElementById("expires").innerText =
+        new Date(data.expires).toDateString();
+
+      const upgradeBtn = document.getElementById("upgrade-btn");
+      if (upgradeBtn) upgradeBtn.style.display = "none";
+    }
+  }
+
+  // Check every 5 seconds (stops automatically once premium)
+  setInterval(refreshSubscription, 5000);
+</script>
