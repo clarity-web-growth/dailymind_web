@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
   <url>
     <loc>https://dailymind-web.onrender.com/</loc>
     <priority>1.0</priority>
   </url>
+
   <url>
-    <loc>https://dailymind-web.onrender.com/dashboard</loc>
+    <loc>https://dailymind-web.onrender.com/pricing</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://dailymind-web.onrender.com/blog</loc>
     <priority>0.8</priority>
   </url>
+
   <url>
-    <loc>https://dailymind-web.onrender.com/upgrade</loc>
-    <priority>0.7</priority>
+    <loc>https://dailymind-web.onrender.com/blog/why-mental-clarity-matters</loc>
+    <priority>0.8</priority>
   </url>
+
 </urlset>
+
