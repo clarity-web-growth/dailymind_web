@@ -1,14 +1,16 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
+from datetime import date
 
 db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True)
     subscription = db.Column(db.String(20), default="free")
-    license_key = db.Column(db.String(32))
-    subscription_expires = db.Column(db.DateTime)
+    message_count = db.Column(db.Integer, default=0)
+    last_used = db.Column(db.Date, default=date.today)
+
 
     def activate_premium(self, days=30):
         self.subscription = "premium"
