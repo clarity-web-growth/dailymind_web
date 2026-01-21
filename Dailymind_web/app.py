@@ -8,7 +8,6 @@ from flask import (
     jsonify,
 )
 import os
-import json
 import hashlib
 import requests
 from openai import OpenAI
@@ -37,7 +36,7 @@ PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 SECRET_SALT = "DAILYMIND-2026-SECURE"
-MEMORY_FILE = "daily_mind_memory.json"
+FREE_LIMIT = 10
 
 # ======================
 # HELPERS
@@ -46,14 +45,21 @@ def generate_license(seed: str) -> str:
     raw = f"{seed}-{SECRET_SALT}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
 
-def load_memory():
-    if not os.path.exists(MEMORY_FILE):
-        return {}
-    with open(MEMORY_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+def get_or_create_user(email: str) -> User:
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(
+            email=email,
+            subscription="free",
+            message_count=0,
+            last_used=date.today()
+        )
+        db.session.add(user)
+        db.session.commit()
+    return user
 
 # ======================
-# ROUTES (UI)
+# UI ROUTES
 # ======================
 @app.route("/")
 def home():
@@ -61,13 +67,11 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    data = load_memory()
-    return render_template(
-        "dashboard.html",
-        conversation_count=data.get("conversation_count", 0),
-        personality=data.get("last_personality", "Friend"),
-        last_topic=data.get("last_topic", "None"),
-    )
+    return render_template("dashboard.html")
+
+@app.route("/pricing")
+def pricing():
+    return render_template("pricing.html")
 
 @app.route("/upgrade")
 def upgrade():
@@ -76,6 +80,18 @@ def upgrade():
 @app.route("/pay")
 def pay():
     return redirect("https://paystack.shop/pay/yzthx-tqho")
+
+@app.route("/blog")
+def blog():
+    return render_template("blog.html")
+
+@app.route("/blog/why-mental-clarity-matters")
+def blog_post():
+    return render_template("blog_mental_clarity.html")
+
+@app.route("/sitemap.xml")
+def sitemap():
+    return app.send_static_file("sitemap.xml")
 
 # ======================
 # PAYSTACK VERIFY (AUTO-UPGRADE)
@@ -103,33 +119,14 @@ def payment_success():
     email = data["customer"]["email"]
     license_key = generate_license(email)
 
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        user = User(email=email)
-
+    user = get_or_create_user(email)
     user.subscription = "premium"
     user.license_key = license_key
+    user.message_count = 0
 
-    db.session.add(user)
     db.session.commit()
 
     return render_template("success.html")
-    
-@app.route("/pricing")
-def pricing():
-    return render_template("pricing.html")
-    
-@app.route("/blog")
-def blog():
-    return render_template("blog.html")
-
-@app.route("/blog/why-mental-clarity-matters")
-def blog_post():
-    return render_template("blog_mental_clarity.html")
-    
-@app.route("/sitemap.xml")
-def sitemap():
-    return app.send_static_file("sitemap.xml")
 
 # ======================
 # CHECK PREMIUM (FRONTEND)
@@ -146,32 +143,41 @@ def check_premium():
     if user and user.subscription == "premium":
         return jsonify({
             "premium": True,
-            "license_key": user.license_key,
+            "license_key": user.license_key
         })
 
     return jsonify({"premium": False})
-    
-
 
 # ======================
-# CHAT STREAM (PREMIUM GATED)
+# CHAT STREAM (FREE + PREMIUM)
 # ======================
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
     data = request.get_json()
     email = data.get("email")
+    text = data.get("text", "")
+    personality = data.get("personality", "Friend")
 
-   # PSEUDO LOGIC — adapt to your code
+    if not email or not text:
+        return Response("Invalid request", status=400)
 
-email = data.get("email")
-is_free = data.get("is_free", False)
+    user = get_or_create_user(email)
 
-user = get_user(email)
+    today = date.today()
+    if user.last_used != today:
+        user.message_count = 0
+        user.last_used = today
 
-if not user.is_premium:
-    # ALLOW free chat
-    pass  # DO NOT BLOCK HERE
+    # 🚫 BLOCK FREE USERS OVER LIMIT
+    if user.subscription == "free" and user.message_count >= FREE_LIMIT:
+        return Response(
+            "🔒 Free limit reached. Upgrade to Premium to continue.",
+            status=403
+        )
 
+    # Count message
+    user.message_count += 1
+    db.session.commit()
 
     def generate():
         try:
@@ -180,11 +186,11 @@ if not user.is_premium:
                 input=[
                     {
                         "role": "system",
-                        "content": f"You are DailyMind. Personality: {data.get('personality', 'Friend')}",
+                        "content": f"You are DailyMind. Personality: {personality}. Be calm, thoughtful, and supportive.",
                     },
                     {
                         "role": "user",
-                        "content": data.get("text", ""),
+                        "content": text,
                     },
                 ],
             ) as stream:
@@ -192,45 +198,19 @@ if not user.is_premium:
                     if event.type == "response.output_text.delta":
                         yield event.delta
         except Exception:
-            yield "\n[Server stream error]\n"
+            yield "\n[Server error]\n"
 
     return Response(
         stream_with_context(generate()),
         content_type="text/plain",
     )
 
-
-FREE_LIMIT = 10
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    user = get_current_user()  # however you fetch user
-
-    today = date.today()
-
-    # Reset daily count
-    if user.last_used != today:
-        user.message_count = 0
-        user.last_used = today
-
-    # Block free users
-    if user.subscription == "free" and user.message_count >= FREE_LIMIT:
-        return jsonify({
-            "error": "Free limit reached",
-            "upgrade": True
-        }), 403
-
-    # Allow message
-    user.message_count += 1
-    db.session.commit()
-
-    # Continue AI response...
-
 # ======================
 # LOCAL
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
