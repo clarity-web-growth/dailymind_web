@@ -111,6 +111,10 @@ def pricing():
 @app.route("/upgrade")
 def upgrade():
     return redirect("https://paystack.shop/pay/yzthx-tqho")
+    
+@app.route("/__debug")
+def debug():
+    return "FLASK APP IS RUNNING", 200
 
 # ======================
 # SITEMAP (FIXED)
@@ -165,3 +169,4 @@ def payment_success():
     user.message_count = 0
 
     db.session.co
+
