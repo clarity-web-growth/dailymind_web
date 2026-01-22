@@ -8,23 +8,22 @@
 
   <link rel="canonical" href="https://dailymind-web.onrender.com/" />
 
-  <!-- ✅ SEO META -->
+  <!-- SEO -->
   <title>DailyMind – Private AI Mentor for Clarity & Emotional Balance</title>
-
-  <meta name="description" content="DailyMind is a private AI mentor for clarity, reflection, and emotional balance. Think clearly. Speak freely. No judgment, no pressure." />
-  <meta name="keywords" content="AI mentor, AI journaling app, mental clarity app, emotional balance AI, self reflection AI, stoic AI coach" />
+  <meta name="description" content="DailyMind is a private AI mentor for clarity, reflection, and emotional balance. Think clearly. Speak freely." />
+  <meta name="keywords" content="AI mentor, AI journaling app, mental clarity app, emotional balance AI" />
   <meta name="author" content="DailyMind" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="DailyMind – Private AI Mentor for Clarity" />
-  <meta property="og:description" content="A private AI mentor for clarity, reflection, and emotional balance. No judgment. No pressure." />
+  <meta property="og:description" content="A private AI mentor for clarity, reflection, and emotional balance." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dailymind-web.onrender.com" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/static/style.css" />
 
-  <!-- Small inline styles for upgrade button -->
+  <!-- UI FIXES -->
   <style>
     .chat-wrapper {
       position: relative;
@@ -32,9 +31,10 @@
       margin: 40px auto;
     }
 
+    /* Small upgrade button */
     .top-upgrade-btn {
       position: absolute;
-      top: -45px;
+      top: -42px;
       right: 0;
       background: #22c55e;
       color: #000;
@@ -44,19 +44,41 @@
       font-weight: 600;
       cursor: pointer;
       font-size: 14px;
+      width: auto;
     }
 
-    .top-upgrade-btn:hover {
-      opacity: 0.9;
+    /* Send row layout */
+    .send-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    #send-btn {
+      background: #22c55e;
+      color: black;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      width: auto;
+      min-width: 90px;
     }
   </style>
 </head>
 
 <body>
 
-<!-- =========================
-     HERO SECTION
-========================= -->
+<!-- HERO -->
 <section style="
   min-height: 100vh;
   display: flex;
@@ -67,81 +89,46 @@
   text-align: center;
   padding: 40px;
 ">
-
   <div style="max-width: 520px;">
-    <h1 style="font-size: 2.4rem; font-weight: 700; margin-bottom: 12px;">
-      🧠 DailyMind
-    </h1>
-
-    <p style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 18px;">
-      Think clearly. Speak freely.
-    </p>
-
-    <p style="font-size: 1rem; opacity: 0.7; margin-bottom: 28px;">
-      A private AI mentor for clarity, reflection, and emotional balance —
-      no judgment, no pressure.
+    <h1>🧠 DailyMind</h1>
+    <p style="opacity:0.85;">Think clearly. Speak freely.</p>
+    <p style="opacity:0.7;">
+      A private AI mentor for clarity, reflection, and emotional balance.
     </p>
 
     <a href="#chat" style="
-      display: inline-block;
-      background: #22c55e;
-      color: black;
-      padding: 14px 26px;
-      border-radius: 12px;
-      font-weight: 600;
-      text-decoration: none;
-      font-size: 1rem;
+      display:inline-block;
+      background:#22c55e;
+      color:black;
+      padding:14px 26px;
+      border-radius:12px;
+      font-weight:600;
+      text-decoration:none;
     ">
       Start Talking
     </a>
   </div>
 </section>
 
-<!-- =========================
-     SEO CONTENT
-========================= -->
-<section class="seo-content" style="
-  max-width: 900px;
-  margin: 80px auto;
-  padding: 0 20px;
-  color: #444;
-  line-height: 1.7;
-  font-size: 15px;
-">
-
+<!-- SEO TEXT -->
+<section style="max-width:900px;margin:80px auto;padding:0 20px;color:#444;">
   <h2>What is DailyMind?</h2>
-  <p>
-    DailyMind is a private AI mentor designed to help individuals think clearly,
-    reflect deeply, and improve emotional balance. It offers a calm, judgment-free
-    space for meaningful conversation and self-reflection.
-  </p>
+  <p>DailyMind is a private AI mentor for calm thinking and reflection.</p>
 
-  <h2>Why use a private AI mentor?</h2>
-  <p>
-    Unlike public chatbots or social platforms, DailyMind focuses on privacy,
-    clarity, and thoughtful responses. It is not therapy — it is a reflection
-    and mental clarity tool built for everyday use.
-  </p>
+  <h2>Why use it?</h2>
+  <p>Unlike public chatbots, DailyMind focuses on privacy and clarity.</p>
 
-  <h2>Who is DailyMind for?</h2>
-  <p>
-    DailyMind is for anyone seeking mental clarity, emotional awareness,
-    or a quiet place to think. Whether you are journaling, reflecting,
-    or simply talking things through, DailyMind supports calm thinking.
-  </p>
+  <h2>Who is it for?</h2>
+  <p>Anyone who wants a quiet place to think, reflect, or journal.</p>
 </section>
 
-<!-- =========================
-     CHAT AREA (MAIN APP)
-========================= -->
+<!-- CHAT -->
 <a id="chat"></a>
 
 <div class="chat-wrapper">
 
-  <!-- ✅ SMALL UPGRADE BUTTON (TOP RIGHT) -->
-  <button class="top-upgrade-btn" onclick="openPricing()">
-    Upgrade
-  </button>
+  <!-- SMALL UPGRADE BUTTON -->
+  <button class="top-upgrade-btn" onclick="openPricing()">Upgrade</button>
 
   <div class="container">
     <h1>🧠 DailyMind</h1>
@@ -155,73 +142,19 @@
 
     <div id="chat-box" class="chat-box"></div>
 
-    <input id="message-input" type="text" placeholder="Type your message..." />
-    <button id="send-btn">Send</button>
+    <!-- FIXED SEND ROW -->
+    <div class="send-row">
+      <input id="message-input" type="text" placeholder="Type your message..." />
+      <button id="send-btn">Send</button>
+    </div>
   </div>
-
 </div>
 
 <script src="/static/app.js"></script>
-  
-  <!-- EMAIL CAPTURE MODAL -->
-<div id="emailModal" style="
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-">
-  <div style="
-    background: #020617;
-    padding: 30px;
-    border-radius: 14px;
-    width: 90%;
-    max-width: 360px;
-    text-align: center;
-    color: white;
-  ">
-    <h3 style="margin-bottom:10px;">Save your progress</h3>
-    <p style="font-size:14px; opacity:0.8;">
-      Enter your email to continue your conversation later.
-    </p>
-
-    <input
-      id="emailInput"
-      type="email"
-      placeholder="you@example.com"
-      style="
-        width:100%;
-        padding:12px;
-        margin-top:14px;
-        border-radius:8px;
-        border:none;
-        outline:none;
-      "
-    />
-
-    <button
-      onclick="saveEmail()"
-      style="
-        margin-top:14px;
-        width:100%;
-        padding:12px;
-        border-radius:8px;
-        border:none;
-        background:#22c55e;
-        font-weight:600;
-        cursor:pointer;
-      "
-    >
-      Continue
-    </button>
-  </div>
-</div>
 
 </body>
 </html>
+
 
 
 
