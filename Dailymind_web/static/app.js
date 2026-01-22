@@ -1,9 +1,3 @@
-input.addEventListener("focus", () => {
-  if (!email) {
-    showEmailModal();
-  }
-});
-
 /***********************
   CONFIG
 ************************/
@@ -42,7 +36,7 @@ function lockChat() {
   sendBtn.disabled = true;
 
   appendMessage(
-    "🔒 Free limit reached. Upgrade to Premium to continue chatting.",
+    "🔒 You’ve reached today’s free limit. Upgrade to continue.",
     "system"
   );
 
@@ -70,25 +64,22 @@ function showEmailModal() {
 
 function saveEmail() {
   const value = document.getElementById("emailInput").value.trim();
+
   if (!value || !value.includes("@")) {
     alert("Please enter a valid email");
     return;
   }
 
-localStorage.setItem("email", value);
-email = value;
+  localStorage.setItem("email", value);
+  email = value;
 
-// ✅ Enable chat after email is saved
-input.disabled = false;
-sendBtn.disabled = false;
+  document.getElementById("emailModal").style.display = "none";
 
-document.getElementById("emailModal").style.display = "none";
-
-appendMessage(
-  "DailyMind: Thanks. You can continue now.",
-  "bot"
-);
-
+  appendMessage(
+    "DailyMind: Thanks. You can continue now.",
+    "bot"
+  );
+}
 
 /***********************
   PAYMENT / UPGRADE
@@ -102,13 +93,13 @@ function goToPayment() {
 }
 
 /***********************
-  CHAT HANDLER (FIXED)
+  CHAT HANDLER
 ************************/
 sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
-  // 🚨 HARD EMAIL GATE (SAFE)
+  // 🚨 HARD EMAIL GATE
   if (!email) {
     showEmailModal();
     appendMessage(
@@ -117,7 +108,6 @@ sendBtn.onclick = async () => {
     );
     return;
   }
-
 
   // 🚫 Free limit check BEFORE sending
   if (!isPremium && messageCount >= FREE_LIMIT) {
@@ -130,11 +120,6 @@ sendBtn.onclick = async () => {
 
   messageCount++;
   localStorage.setItem("messageCount", messageCount);
-
-  // 📩 Ask for email after 2 messages (FREE USERS ONLY)
-  if (messageCount === 2 && !email) {
-    setTimeout(showEmailModal, 600);
-  }
 
   let response;
 
@@ -149,27 +134,26 @@ sendBtn.onclick = async () => {
         is_free: !isPremium
       })
     });
-  } catch (err) {
+  } catch {
     appendMessage(
-      "DailyMind: Network error. Please check your connection and try again.",
+      "DailyMind: Network error. Please try again.",
       "bot"
     );
     return;
   }
 
-  // 🚨 CRITICAL FIX: STOP HTML / 404 FROM STREAMING
   if (!response.ok || !response.body) {
-  let errorMessage = "Please try again in a moment.";
+    let errorMessage = "Please try again shortly.";
 
-  if (response.status === 403) {
-    errorMessage =
-      "🔒 You’ve reached today’s free limit. Upgrade to Premium to keep going.";
-    lockChat();
+    if (response.status === 403) {
+      errorMessage =
+        "🔒 You’ve reached today’s free limit. Upgrade to continue.";
+      lockChat();
+    }
+
+    appendMessage("DailyMind: " + errorMessage, "bot");
+    return;
   }
-
-  appendMessage("DailyMind: " + errorMessage, "bot");
-  return;
-}
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -183,33 +167,10 @@ sendBtn.onclick = async () => {
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // 🔒 Lock after response if limit hit
   if (!isPremium && messageCount >= FREE_LIMIT) {
     lockChat();
   }
 };
-
-/***********************
-  PREMIUM CHECK
-************************/
-async function checkPremium(email) {
-  const res = await fetch("/check-premium", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email })
-  });
-
-  const data = await res.json();
-
-  if (data.premium) {
-    localStorage.setItem("isPremium", "true");
-    localStorage.removeItem("messageCount");
-    alert("🎉 Premium unlocked!");
-    location.reload();
-  } else {
-    alert("Payment not confirmed yet. Please try again.");
-  }
-}
 
 /***********************
   AUTO LOCK ON LOAD
@@ -217,5 +178,3 @@ async function checkPremium(email) {
 if (!isPremium && messageCount >= FREE_LIMIT) {
   lockChat();
 }
-
-
