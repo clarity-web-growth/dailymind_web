@@ -67,20 +67,10 @@ STYLE RULES:
 - Never sound like a therapist or a chatbot.
 
 RESPONSE STRUCTURE:
-
 1. Reflection
-Briefly reflect the essence of what the user is experiencing.
-
 2. Insight
-Explain what may be happening beneath the surface.
-
 3. Guidance
-Offer ONE grounded perspective or direction.
-
 4. Continuation
-Invite depth with calm prompts.
-
-Clarity matters more than completeness.
 """
 
 # ======================
@@ -123,6 +113,34 @@ def upgrade():
     return redirect("https://paystack.shop/pay/yzthx-tqho")
 
 # ======================
+# SITEMAP (FIXED)
+# ======================
+@app.route("/sitemap.xml")
+def sitemap():
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://dailymind-web.onrender.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://dailymind-web.onrender.com/pricing</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://dailymind-web.onrender.com/dashboard</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>
+"""
+    return Response(xml, mimetype="application/xml")
+
+# ======================
 # PAYSTACK VERIFY → AUTO UPGRADE
 # ======================
 @app.route("/payment-success")
@@ -146,77 +164,4 @@ def payment_success():
     user.license_key = generate_license(email)
     user.message_count = 0
 
-    db.session.commit()
-    return render_template("success.html")
-
-# ======================
-# CHECK PREMIUM (FRONTEND)
-# ======================
-@app.route("/check-premium", methods=["POST"])
-def check_premium():
-    email = request.json.get("email")
-    user = User.query.filter_by(email=email).first()
-
-    return jsonify({
-        "premium": bool(user and user.subscription == "premium")
-    })
-
-# ======================
-# CHAT STREAM (FREE + PREMIUM)
-# ======================
-@app.route("/chat-stream", methods=["POST"])
-def chat_stream():
-    data = request.get_json()
-    email = data.get("email")
-    text = data.get("text", "")
-
-    if not email:
-        return jsonify({"error": "Email required"}), 400
-
-    user = get_or_create_user(email)
-    today = date.today()
-
-    # Reset daily free limit
-    if user.last_used != today:
-        user.message_count = 0
-        user.last_used = today
-        db.session.commit()
-
-    # Enforce free limit
-    if user.subscription == "free" and user.message_count >= FREE_LIMIT:
-        return Response(
-            "🔒 Free limit reached. Upgrade to Premium.\n",
-            status=403,
-            content_type="text/plain",
-        )
-
-    user.message_count += 1
-    db.session.commit()
-
-    system_prompt = PREMIUM_PROMPT if user.subscription == "premium" else FREE_PROMPT
-
-    def generate():
-        try:
-            with client.responses.stream(
-                model="gpt-4.1-mini",
-                input=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": text},
-                ],
-            ) as stream:
-                for event in stream:
-                    if event.type == "response.output_text.delta":
-                        yield event.delta
-        except Exception:
-            yield "\n[Server error]\n"
-
-    return Response(
-        stream_with_context(generate()),
-        content_type="text/plain; charset=utf-8",
-    )
-
-# ======================
-# RUN
-# ======================
-if __name__ == "__main__":
-    app.run(debug=True)
+    db.session.co
