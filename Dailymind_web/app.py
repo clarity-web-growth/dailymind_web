@@ -121,35 +121,6 @@ def sitemap():
         mimetype="application/xml"
     )
 
-
-# ======================
-# SITEMAP (FIXED)
-# ======================
-@app.route("/sitemap.xml")
-def sitemap():
-    xml = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://dailymind-web.onrender.com/</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <url>
-    <loc>https://dailymind-web.onrender.com/pricing</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://dailymind-web.onrender.com/dashboard</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-</urlset>
-"""
-    return Response(xml, mimetype="application/xml")
-
 # ======================
 # PAYSTACK VERIFY → AUTO UPGRADE
 # ======================
@@ -175,5 +146,6 @@ def payment_success():
     user.message_count = 0
 
     db.session.co
+
 
 
