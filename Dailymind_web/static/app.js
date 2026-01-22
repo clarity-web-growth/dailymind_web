@@ -1,3 +1,9 @@
+input.addEventListener("focus", () => {
+  if (!email) {
+    showEmailModal();
+  }
+});
+
 /***********************
   CONFIG
 ************************/
@@ -69,11 +75,20 @@ function saveEmail() {
     return;
   }
 
-  localStorage.setItem("email", value);
-  email = value;
+localStorage.setItem("email", value);
+email = value;
 
-  document.getElementById("emailModal").style.display = "none";
-}
+// ✅ Enable chat after email is saved
+input.disabled = false;
+sendBtn.disabled = false;
+
+document.getElementById("emailModal").style.display = "none";
+
+appendMessage(
+  "DailyMind: Thanks. You can continue now.",
+  "bot"
+);
+
 
 /***********************
   PAYMENT / UPGRADE
@@ -200,4 +215,10 @@ async function checkPremium(email) {
 ************************/
 if (!isPremium && messageCount >= FREE_LIMIT) {
   lockChat();
+}
+
+// 🚫 Disable chat if no email on first load
+if (!email) {
+  input.disabled = true;
+  sendBtn.disabled = true;
 }
