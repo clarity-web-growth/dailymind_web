@@ -120,6 +120,74 @@ def sitemap():
         path="sitemap.xml",
         mimetype="application/xml"
     )
+# ======================
+# CHECK PREMIUM (FRONTEND)
+# ======================
+@app.route("/check-premium", methods=["POST"])
+def check_premium():
+    email = request.json.get("email")
+    user = User.query.filter_by(email=email).first()
+
+    return jsonify({
+        "premium": bool(user and user.subscription == "premium")
+    })
+
+
+# ======================
+# CHAT STREAM (FREE + PREMIUM)
+# ======================
+@app.route("/chat-stream", methods=["POST"])
+def chat_stream():
+    data = request.get_json()
+    email = data.get("email")
+    text = data.get("text", "")
+
+    if not email:
+        return jsonify({"error": "Email required"}), 400
+
+    user = get_or_create_user(email)
+    today = date.today()
+
+    # Reset daily free limit
+    if user.last_used != today:
+        user.message_count = 0
+        user.last_used = today
+        db.session.commit()
+
+    # Enforce free limit
+    if user.subscription == "free" and user.message_count >= FREE_LIMIT:
+        return Response(
+            "Free limit reached",
+            status=403,
+            content_type="text/plain",
+        )
+
+    user.message_count += 1
+    db.session.commit()
+
+    system_prompt = PREMIUM_PROMPT if user.subscription == "premium" else FREE_PROMPT
+
+    def generate():
+        try:
+            with client.responses.stream(
+                model="gpt-4.1-mini",
+                input=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": text},
+                ],
+            ) as stream:
+                for event in stream:
+                    if event.type == "response.output_text.delta":
+                        yield event.delta
+
+        except Exception as e:
+            print("OpenAI error:", e)
+            yield "I’m having trouble responding right now. Please try again in a moment."
+
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/plain; charset=utf-8",
+    )
 
 # ======================
 # PAYSTACK VERIFY → AUTO UPGRADE
@@ -146,6 +214,7 @@ def payment_success():
     user.message_count = 0
 
     db.session.co
+
 
 
 
