@@ -143,17 +143,17 @@ sendBtn.onclick = async () => {
 
   // 🚨 CRITICAL FIX: STOP HTML / 404 FROM STREAMING
   if (!response.ok || !response.body) {
-    let errorMessage = "Something went wrong. Please try again.";
+  let errorMessage = "Please try again in a moment.";
 
-    if (response.status === 403) {
-      errorMessage = "🔒 Free limit reached. Upgrade to Premium to continue.";
-      lockChat();
-    }
-
-    appendMessage("DailyMind: " + errorMessage, "bot");
-    console.error("Chat error:", response.status);
-    return;
+  if (response.status === 403) {
+    errorMessage =
+      "🔒 You’ve reached today’s free limit. Upgrade to Premium to keep going.";
+    lockChat();
   }
+
+  appendMessage("DailyMind: " + errorMessage, "bot");
+  return;
+}
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
