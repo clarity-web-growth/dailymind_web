@@ -93,6 +93,16 @@ sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
+  // 🚨 REQUIRE EMAIL BEFORE CHAT
+  if (!email) {
+    showEmailModal();
+    appendMessage(
+      "DailyMind: Please enter your email to continue.",
+      "bot"
+    );
+    return;
+  }
+
   // 🚫 Free limit check BEFORE sending
   if (!isPremium && messageCount >= FREE_LIMIT) {
     lockChat();
