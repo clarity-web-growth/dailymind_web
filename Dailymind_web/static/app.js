@@ -1,3 +1,6 @@
+let email = localStorage.getItem("email");
+let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
+
 /***********************
   USER STATE
 ************************/
@@ -59,6 +62,25 @@ function showUpgradeInline() {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+function showEmailModal() {
+  if (!email) {
+    document.getElementById("emailModal").style.display = "flex";
+  }
+}
+
+function saveEmail() {
+  const input = document.getElementById("emailInput").value.trim();
+  if (!input || !input.includes("@")) {
+    alert("Please enter a valid email");
+    return;
+  }
+
+  localStorage.setItem("email", input);
+  email = input;
+
+  document.getElementById("emailModal").style.display = "none";
+}
+
 /***********************
   PAYMENT / UPGRADE
 ************************/
@@ -89,8 +111,13 @@ sendBtn.onclick = async () => {
   appendMessage("You: " + text, "user");
   input.value = "";
 
-  messageCount++;
-  localStorage.setItem("messageCount", messageCount);
+ messageCount++;
+localStorage.setItem("messageCount", messageCount);
+
+// 👇 SHOW EMAIL POPUP AFTER 2 MESSAGES
+if (messageCount === 2 && !email) {
+  setTimeout(showEmailModal, 800);
+}
 
   // Send message
   const response = await fetch("/chat-stream", {
