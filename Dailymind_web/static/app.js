@@ -6,7 +6,7 @@ const FREE_LIMIT = 10;
 /***********************
   USER STATE
 ************************/
-let email = localStorage.getItem("email"); // real email only
+let email = localStorage.getItem("email");
 let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
 let isPremium = localStorage.getItem("isPremium") === "true";
 
@@ -87,7 +87,7 @@ function goToPayment() {
 }
 
 /***********************
-  CHAT HANDLER
+  CHAT HANDLER (FIXED)
 ************************/
 sendBtn.onclick = async () => {
   const text = input.value.trim();
@@ -110,16 +110,40 @@ sendBtn.onclick = async () => {
     setTimeout(showEmailModal, 600);
   }
 
-  const response = await fetch("/chat-stream", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text,
-      personality: personalitySelect.value,
-      email,
-      is_free: !isPremium
-    })
-  });
+  let response;
+
+  try {
+    response = await fetch("/chat-stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text,
+        personality: personalitySelect.value,
+        email,
+        is_free: !isPremium
+      })
+    });
+  } catch (err) {
+    appendMessage(
+      "DailyMind: Network error. Please check your connection and try again.",
+      "bot"
+    );
+    return;
+  }
+
+  // 🚨 CRITICAL FIX: STOP HTML / 404 FROM STREAMING
+  if (!response.ok || !response.body) {
+    let errorMessage = "Something went wrong. Please try again.";
+
+    if (response.status === 403) {
+      errorMessage = "🔒 Free limit reached. Upgrade to Premium to continue.";
+      lockChat();
+    }
+
+    appendMessage("DailyMind: " + errorMessage, "bot");
+    console.error("Chat error:", response.status);
+    return;
+  }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
