@@ -13,6 +13,7 @@ import requests
 from datetime import date
 from openai import OpenAI
 from models import db, User
+from flask import send_from_directory
 
 # ======================
 # APP SETUP
@@ -112,9 +113,14 @@ def pricing():
 def upgrade():
     return redirect("https://paystack.shop/pay/yzthx-tqho")
     
-@app.route("/__debug")
-def debug():
-    return "FLASK APP IS RUNNING", 200
+@app.route("/sitemap.xml")
+def sitemap():
+    return send_from_directory(
+        directory="static",
+        path="sitemap.xml",
+        mimetype="application/xml"
+    )
+
 
 # ======================
 # SITEMAP (FIXED)
@@ -169,4 +175,5 @@ def payment_success():
     user.message_count = 0
 
     db.session.co
+
 
