@@ -108,7 +108,7 @@ sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
-  // 🚨 REQUIRE EMAIL BEFORE CHAT
+  // 🚨 HARD EMAIL GATE (SAFE)
   if (!email) {
     showEmailModal();
     appendMessage(
@@ -117,6 +117,7 @@ sendBtn.onclick = async () => {
     );
     return;
   }
+
 
   // 🚫 Free limit check BEFORE sending
   if (!isPremium && messageCount >= FREE_LIMIT) {
@@ -217,8 +218,4 @@ if (!isPremium && messageCount >= FREE_LIMIT) {
   lockChat();
 }
 
-// 🚫 Disable chat if no email on first load
-if (!email) {
-  input.disabled = true;
-  sendBtn.disabled = true;
-}
+
