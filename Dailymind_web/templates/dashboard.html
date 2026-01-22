@@ -1,142 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>DailyMind Dashboard</title>
-    <style>
-        body {
-            background: #0b1220;
-            color: white;
-            font-family: Arial, sans-serif;
-            padding: 40px;
-        }
-        .card {
-            max-width: 420px;
-            margin: auto;
-            background: #111a2e;
-            padding: 25px;
-            border-radius: 12px;
-        }
-        .badge {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .premium {
-            background: #22c55e;
-            color: black;
-        }
-        .free {
-            background: #374151;
-        }
-        .btn {
-            display: block;
-            margin-top: 20px;
-            padding: 12px;
-            text-align: center;
-            background: #22c55e;
-            color: black;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>DailyMind – Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 
-<body>
-    <div class="card">
-       <h2>DailyMind Dashboard</h2>
+<body class="dashboard">
 
-        <p><strong>Email:</strong> {{ email }}</p>
+<!-- ================= TOP BAR ================= -->
+<header class="top-bar">
+  <div class="logo">🧠 DailyMind</div>
 
-<p>
-  <strong>Plan:</strong>
-  <span id="plan">{{ plan|capitalize }}</span>
-</p>
+  <button id="upgradeBtn" class="upgrade-btn">
+    Upgrade
+  </button>
+</header>
 
-<p>
-  <strong>Expires:</strong>
-  <span id="expires">{{ expires }}</span>
-</p>
+<!-- ================= CHAT ================= -->
+<main class="chat-container">
 
+  <div id="chat-box" class="chat-box"></div>
 
-      {% if license_key %}
-      <p><strong>License Key:</strong> {{ license_key }}</p>
-      {% endif %}
+  <!-- Inline upgrade appears here -->
+  <div id="upgrade-inline" style="display:none;"></div>
 
-{% if plan|lower != "premium" %}
-<a href="/pay" class="btn" id="upgrade-btn">Upgrade to Premium</a>
-</a>
-{% else %}
-<a href="/pay" class="btn">
-  Renew Subscription
-</a>
-{% endif %}
+</main>
 
- </div> 
-    
+<!-- ================= INPUT ================= -->
+<footer class="input-bar">
+  <select id="personality">
+    <option>Friend</option>
+    <option>Coach</option>
+    <option>Philosopher</option>
+  </select>
+
+  <input
+    id="message-input"
+    type="text"
+    placeholder="Type your message…"
+  />
+
+  <button id="send-btn">Send</button>
+</footer>
+
+<script src="/static/app.js"></script>
+
 <script>
-async function refreshSubscription() {
-  const email = "{{ email }}";
-  if (!email) return;
-
-  try {
-    const res = await fetch("/check-premium", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await res.json();
-
-    if (data.premium) {
-      // Update plan
-      const planEl = document.getElementById("plan");
-      if (planEl) planEl.innerText = "Premium";
-
-      // Update expiry
-      const expEl = document.getElementById("expires");
-      if (expEl && data.expires) {
-        expEl.innerText = new Date(data.expires).toDateString();
-      }
-
-      // Remove upgrade button
-      const btn = document.getElementById("upgrade-btn");
-      if (btn) btn.remove();
-    }
-  } catch (e) {
-    console.error("Subscription refresh failed", e);
-  }
-}
-
-// Run once page loads
-setTimeout(refreshSubscription, 1000);
+  document.getElementById("upgradeBtn").onclick = () => {
+    window.location.href = "/pricing";
+  };
 </script>
 
 </body>
 </html>
 
-<script>
-  const email = "{{ email }}";
-
-  async function refreshSubscription() {
-    const res = await fetch("/check-premium", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await res.json();
-
-    if (data.premium) {
-      document.getElementById("plan").innerText = "Premium";
-      document.getElementById("expires").innerText =
-        new Date(data.expires).toDateString();
-
-      const upgradeBtn = document.getElementById("upgrade-btn");
-      if (upgradeBtn) upgradeBtn.style.display = "none";
-    }
-  }
-
-  // Check every 5 seconds (stops automatically once premium)
-  setInterval(refreshSubscription, 5000);
-</script>
