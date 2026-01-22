@@ -8,20 +8,18 @@ from flask import (
     jsonify,
 )
 import os
+import json
 import hashlib
 import requests
+from datetime import date
 from openai import OpenAI
 from models import db, User
-from datetime import date
 
 # ======================
-# APP
+# APP SETUP
 # ======================
 app = Flask(__name__)
 
-# ======================
-# CONFIG
-# ======================
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dailymind.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -30,6 +28,9 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+# ======================
+# CONFIG
+# ======================
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
 
@@ -52,14 +53,14 @@ def get_or_create_user(email: str) -> User:
             email=email,
             subscription="free",
             message_count=0,
-            last_used=date.today()
+            last_used=date.today(),
         )
         db.session.add(user)
         db.session.commit()
     return user
 
 # ======================
-# UI ROUTES
+# ROUTES — UI
 # ======================
 @app.route("/")
 def home():
@@ -75,32 +76,16 @@ def pricing():
 
 @app.route("/upgrade")
 def upgrade():
-    return render_template("upgrade.html")
-
-@app.route("/pay")
-def pay():
     return redirect("https://paystack.shop/pay/yzthx-tqho")
 
-@app.route("/blog")
-def blog():
-    return render_template("blog.html")
-
-@app.route("/blog/why-mental-clarity-matters")
-def blog_post():
-    return render_template("blog_mental_clarity.html")
-
-@app.route("/sitemap.xml")
-def sitemap():
-    return app.send_static_file("sitemap.xml")
-
 # ======================
-# PAYSTACK VERIFY (AUTO-UPGRADE)
+# PAYSTACK VERIFY → AUTO UPGRADE
 # ======================
 @app.route("/payment-success")
 def payment_success():
     reference = request.args.get("reference")
     if not reference:
-        return "Missing payment reference", 400
+        return "Invalid payment reference", 400
 
     headers = {
         "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"
@@ -129,13 +114,11 @@ def payment_success():
     return render_template("success.html")
 
 # ======================
-# CHECK PREMIUM (FRONTEND)
+# CHECK PREMIUM (FRONTEND USE)
 # ======================
 @app.route("/check-premium", methods=["POST"])
 def check_premium():
-    data = request.get_json()
-    email = data.get("email")
-
+    email = request.json.get("email")
     if not email:
         return jsonify({"premium": False})
 
@@ -158,21 +141,24 @@ def chat_stream():
     text = data.get("text", "")
     personality = data.get("personality", "Friend")
 
-    if not email or not text:
-        return Response("Invalid request", status=400)
+    if not email:
+        return jsonify({"error": "Email required"}), 400
 
     user = get_or_create_user(email)
-
     today = date.today()
+
+    # Reset daily free limit
     if user.last_used != today:
         user.message_count = 0
         user.last_used = today
+        db.session.commit()
 
-    # 🚫 BLOCK FREE USERS OVER LIMIT
+    # Enforce free limit
     if user.subscription == "free" and user.message_count >= FREE_LIMIT:
         return Response(
-            "🔒 Free limit reached. Upgrade to Premium to continue.",
-            status=403
+            "🔒 Free limit reached. Upgrade to Premium to continue.\n",
+            content_type="text/plain",
+            status=403,
         )
 
     # Count message
@@ -186,30 +172,32 @@ def chat_stream():
                 input=[
                     {
                         "role": "system",
-                        "content": f"You are DailyMind. Personality: {personality}. Be calm, thoughtful, and supportive.",
+                        "content": f"You are DailyMind. Personality: {personality}"
                     },
                     {
                         "role": "user",
-                        "content": text,
-                    },
+                        "content": text
+                    }
                 ],
             ) as stream:
                 for event in stream:
                     if event.type == "response.output_text.delta":
                         yield event.delta
         except Exception:
-            yield "\n[Server error]\n"
+            yield "\n[Server stream error]\n"
 
     return Response(
         stream_with_context(generate()),
-        content_type="text/plain",
+        content_type="text/plain; charset=utf-8",
     )
 
 # ======================
-# LOCAL
+# RUN
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
 
 
