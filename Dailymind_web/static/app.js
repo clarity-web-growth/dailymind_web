@@ -177,3 +177,8 @@ async function checkPremium(email) {
 if (!isPremium && messageCount >= FREE_LIMIT) {
   lockChat();
 }
+
+// GLOBAL UPGRADE HANDLER
+window.openPricing = function () {
+  window.location.href = "/pricing";
+};
