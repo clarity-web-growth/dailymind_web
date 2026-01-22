@@ -40,26 +40,35 @@ textarea {
   padding: 8px;
 }
 
-button {
-  width: 100%;
-  margin-top: 6px;
-  padding: 10px;
-  background: #22c55e;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-#upgradeBtn {
-  width: 100%;
-  margin-top: 10px;
-  padding: 12px;
+/* Shared green button style */
+.btn,
+.upgrade-btn,
+#send-btn {
   background: #22c55e;
   color: black;
-  font-weight: bold;
   border: none;
-  border-radius: 6px;
+  padding: 10px 18px;   /* 👈 smaller */
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
+  width: auto;          /* 👈 THIS IS THE KEY */
+  min-width: 120px;     /* keeps it neat */
+}
+
+/* Center upgrade button */
+.upgrade-btn {
+  display: inline-block;
+  margin: 12px auto;
+}
+
+/* Send button next to input (mobile) */
+.send-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 }
 
 .premium-wrapper {
@@ -173,3 +182,4 @@ button {
   border-radius: 8px;
   font-weight: 600;
 }
+
