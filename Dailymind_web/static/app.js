@@ -1,19 +1,12 @@
-let email = localStorage.getItem("email");
-let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
+/***********************
+  CONFIG
+************************/
+const FREE_LIMIT = 10;
 
 /***********************
   USER STATE
 ************************/
-const FREE_LIMIT = 10;
-
-// Email (free users get a temp one)
-let email = localStorage.getItem("email");
-if (!email) {
-  email = "free_user_" + Date.now();
-  localStorage.setItem("email", email);
-}
-
-// Message count & premium
+let email = localStorage.getItem("email"); // real email only
 let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
 let isPremium = localStorage.getItem("isPremium") === "true";
 
@@ -37,7 +30,7 @@ function appendMessage(text, className) {
 }
 
 function lockChat() {
-  if (input.disabled) return; // prevent double-lock
+  if (input.disabled) return;
 
   input.disabled = true;
   sendBtn.disabled = true;
@@ -54,7 +47,7 @@ function showUpgradeInline() {
   const upgradeDiv = document.createElement("div");
   upgradeDiv.className = "upgrade-box";
   upgradeDiv.innerHTML = `
-    <button onclick="openPricing()" class="upgrade-btn">
+    <button class="upgrade-btn" onclick="openPricing()">
       🚀 Upgrade to Premium
     </button>
   `;
@@ -62,21 +55,22 @@ function showUpgradeInline() {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+/***********************
+  EMAIL MODAL
+************************/
 function showEmailModal() {
-  if (!email) {
-    document.getElementById("emailModal").style.display = "flex";
-  }
+  document.getElementById("emailModal").style.display = "flex";
 }
 
 function saveEmail() {
-  const input = document.getElementById("emailInput").value.trim();
-  if (!input || !input.includes("@")) {
+  const value = document.getElementById("emailInput").value.trim();
+  if (!value || !value.includes("@")) {
     alert("Please enter a valid email");
     return;
   }
 
-  localStorage.setItem("email", input);
-  email = input;
+  localStorage.setItem("email", value);
+  email = value;
 
   document.getElementById("emailModal").style.display = "none";
 }
@@ -89,10 +83,7 @@ function openPricing() {
 }
 
 function goToPayment() {
-  window.open(
-    "https://paystack.shop/pay/yzthx-tqho",
-    "_blank"
-  );
+  window.open("https://paystack.shop/pay/yzthx-tqho", "_blank");
 }
 
 /***********************
@@ -102,7 +93,7 @@ sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
-  // ⛔ FREE LIMIT CHECK
+  // 🚫 Free limit check BEFORE sending
   if (!isPremium && messageCount >= FREE_LIMIT) {
     lockChat();
     return;
@@ -111,15 +102,14 @@ sendBtn.onclick = async () => {
   appendMessage("You: " + text, "user");
   input.value = "";
 
- messageCount++;
-localStorage.setItem("messageCount", messageCount);
+  messageCount++;
+  localStorage.setItem("messageCount", messageCount);
 
-// 👇 SHOW EMAIL POPUP AFTER 2 MESSAGES
-if (messageCount === 2 && !email) {
-  setTimeout(showEmailModal, 800);
-}
+  // 📩 Ask for email after 2 messages (FREE USERS ONLY)
+  if (messageCount === 2 && !email) {
+    setTimeout(showEmailModal, 600);
+  }
 
-  // Send message
   const response = await fetch("/chat-stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -143,7 +133,7 @@ if (messageCount === 2 && !email) {
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // Lock AFTER response if limit hit
+  // 🔒 Lock after response if limit hit
   if (!isPremium && messageCount >= FREE_LIMIT) {
     lockChat();
   }
@@ -177,8 +167,3 @@ async function checkPremium(email) {
 if (!isPremium && messageCount >= FREE_LIMIT) {
   lockChat();
 }
-
-// GLOBAL UPGRADE HANDLER
-window.openPricing = function () {
-  window.location.href = "/pricing";
-};
