@@ -111,6 +111,12 @@ def upgrade():
 def blog():
     return render_template("blog.html")
 
+@app.route("/blog/<slug>")
+def blog_post(slug):
+    try:
+        return render_template(f"blog/{slug}.html")
+    except:
+        return "Blog post not found", 404
 
 @app.route("/sitemap.xml")
 def sitemap():
@@ -225,6 +231,7 @@ def payment_success():
 # ======================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
