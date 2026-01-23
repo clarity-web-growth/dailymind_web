@@ -6,6 +6,7 @@ from flask import (
     stream_with_context,
     redirect,
     jsonify,
+    send_from_directory,
 )
 import os
 import hashlib
@@ -13,7 +14,6 @@ import requests
 from datetime import date
 from openai import OpenAI
 from models import db, User
-from flask import send_from_directory
 
 # ======================
 # APP SETUP
@@ -58,20 +58,9 @@ You do not judge.
 Your role is not to fix the user.
 Your role is to help them think clearly.
 
-STYLE RULES:
-- Speak calmly and confidently.
-- Use short paragraphs.
-- Avoid emojis.
-- Avoid motivational clichés.
-- Avoid lists unless absolutely necessary.
-- Never overwhelm the user.
-- Never sound like a therapist or a chatbot.
-
-RESPONSE STRUCTURE:
-1. Reflection
-2. Insight
-3. Guidance
-4. Continuation
+Speak calmly.
+Use short paragraphs.
+Avoid emojis and clichés.
 """
 
 # ======================
@@ -80,6 +69,7 @@ RESPONSE STRUCTURE:
 def generate_license(seed: str) -> str:
     raw = f"{seed}-{SECRET_SALT}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16].upper()
+
 
 def get_or_create_user(email: str) -> User:
     user = User.query.filter_by(email=email).first()
@@ -101,29 +91,34 @@ def get_or_create_user(email: str) -> User:
 def home():
     return render_template("index.html")
 
+
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
+
 
 @app.route("/pricing")
 def pricing():
     return render_template("pricing.html")
 
+
 @app.route("/upgrade")
 def upgrade():
     return redirect("https://paystack.shop/pay/yzthx-tqho")
-    
+
+
+@app.route("/blog")
+def blog():
+    return render_template("blog.html")
+
+
 @app.route("/sitemap.xml")
 def sitemap():
     return send_from_directory(
         directory="static",
         path="sitemap.xml",
-        mimetype="application/xml"
+        mimetype="application/xml",
     )
-    
-    @app.route("/blog")
-def blog():
-    return render_template("blog.html")
 
 # ======================
 # CHECK PREMIUM (FRONTEND)
@@ -137,7 +132,6 @@ def check_premium():
         "premium": bool(user and user.subscription == "premium")
     })
 
-
 # ======================
 # CHAT STREAM (FREE + PREMIUM)
 # ======================
@@ -145,15 +139,18 @@ def check_premium():
 def chat_stream():
     data = request.get_json()
     email = data.get("email")
-    text = data.get("text", "")
+    text = data.get("text", "").strip()
 
     if not email:
         return jsonify({"error": "Email required"}), 400
 
+    if not text:
+        return jsonify({"error": "Message required"}), 400
+
     user = get_or_create_user(email)
     today = date.today()
 
-    # Reset daily free limit
+    # Reset daily limit
     if user.last_used != today:
         user.message_count = 0
         user.last_used = today
@@ -162,7 +159,7 @@ def chat_stream():
     # Enforce free limit
     if user.subscription == "free" and user.message_count >= FREE_LIMIT:
         return Response(
-            "Free limit reached",
+            "You’ve reached today’s free limit. Upgrade to continue.",
             status=403,
             content_type="text/plain",
         )
@@ -170,7 +167,9 @@ def chat_stream():
     user.message_count += 1
     db.session.commit()
 
-    system_prompt = PREMIUM_PROMPT if user.subscription == "premium" else FREE_PROMPT
+    system_prompt = (
+        PREMIUM_PROMPT if user.subscription == "premium" else FREE_PROMPT
+    )
 
     def generate():
         try:
@@ -184,10 +183,9 @@ def chat_stream():
                 for event in stream:
                     if event.type == "response.output_text.delta":
                         yield event.delta
-
         except Exception as e:
             print("OpenAI error:", e)
-            yield "I’m having trouble responding right now. Please try again in a moment."
+            yield "I’m having trouble responding right now. Please try again."
 
     return Response(
         stream_with_context(generate()),
@@ -218,8 +216,15 @@ def payment_success():
     user.license_key = generate_license(email)
     user.message_count = 0
 
-    db.session.co
+    db.session.commit()
 
+    return render_template("success.html")
+
+# ======================
+# RUN (LOCAL ONLY)
+# ======================
+if __name__ == "__main__":
+    app.run(debug=True)
 
 
 
