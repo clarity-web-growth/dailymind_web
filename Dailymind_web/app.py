@@ -120,6 +120,11 @@ def sitemap():
         path="sitemap.xml",
         mimetype="application/xml"
     )
+    
+    @app.route("/blog")
+def blog():
+    return render_template("blog.html")
+
 # ======================
 # CHECK PREMIUM (FRONTEND)
 # ======================
@@ -214,6 +219,7 @@ def payment_success():
     user.message_count = 0
 
     db.session.co
+
 
 
 
