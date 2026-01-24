@@ -1,181 +1,158 @@
-/***********************
-  CONFIG
-************************/
-const FREE_LIMIT = 10;
+document.addEventListener("DOMContentLoaded", () => {
 
-/***********************
-  USER STATE
-************************/
-let email = localStorage.getItem("email");
-let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
-let isPremium = localStorage.getItem("isPremium") === "true";
+  /***********************
+    CONFIG
+  ************************/
+  const FREE_LIMIT = 10;
 
-/***********************
-  DOM ELEMENTS
-************************/
-const chatBox = document.getElementById("chat-box");
-const input = document.getElementById("message-input");
-const sendBtn = document.getElementById("send-btn");
-const personalitySelect = document.getElementById("personality");
+  /***********************
+    USER STATE
+  ************************/
+  let email = localStorage.getItem("email");
+  let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
+  let isPremium = localStorage.getItem("isPremium") === "true";
 
-/***********************
-  UI HELPERS
-************************/
-function appendMessage(text, className) {
-  const div = document.createElement("div");
-  div.className = className;
-  div.textContent = text;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+  /***********************
+    DOM ELEMENTS
+  ************************/
+  const chatBox = document.getElementById("chat-box");
+  const input = document.getElementById("message-input");
+  const sendBtn = document.getElementById("send-btn");
+  const personalitySelect = document.getElementById("personality");
 
-function lockChat() {
-  if (input.disabled) return;
-
-  input.disabled = true;
-  sendBtn.disabled = true;
-
-  appendMessage(
-    "🔒 You’ve reached today’s free limit. Upgrade to continue.",
-    "system"
-  );
-
-  showUpgradeInline();
-}
-
-function showUpgradeInline() {
-  const upgradeDiv = document.createElement("div");
-  upgradeDiv.className = "upgrade-box";
-  upgradeDiv.innerHTML = `
-    <button class="upgrade-btn" onclick="openPricing()">
-      🚀 Upgrade to Premium
-    </button>
-  `;
-  chatBox.appendChild(upgradeDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-/***********************
-  EMAIL MODAL
-************************/
-function showEmailModal() {
-  document.getElementById("emailModal").style.display = "flex";
-}
-
-function saveEmail() {
-  const value = document.getElementById("emailInput").value.trim();
-
-  if (!value || !value.includes("@")) {
-    alert("Please enter a valid email");
+  /***********************
+    SAFETY CHECK
+  ************************/
+  if (!sendBtn || !input) {
+    console.error("Send button or input not found!");
     return;
   }
 
-  localStorage.setItem("email", value);
-  email = value;
-
-  document.getElementById("emailModal").style.display = "none";
-
-  appendMessage(
-    "DailyMind: Thanks. You can continue now.",
-    "bot"
-  );
-}
-
-/***********************
-  PAYMENT / UPGRADE
-************************/
-function openPricing() {
-  window.location.href = "/pricing";
-}
-
-function goToPayment() {
-  window.open("https://paystack.shop/pay/yzthx-tqho", "_blank");
-}
-
-/***********************
-  CHAT HANDLER
-************************/
-sendBtn.onclick = async (e) => {
-  e.preventDefault();
-  const text = input.value.trim();
-  if (!text) return;
-
-  // 🚨 HARD EMAIL GATE
-  if (!email) {
-    showEmailModal();
-    appendMessage(
-      "DailyMind: Please enter your email to continue.",
-      "bot"
-    );
-    return;
-  }
-
-  // 🚫 Free limit check BEFORE sending
-  if (!isPremium && messageCount >= FREE_LIMIT) {
-    lockChat();
-    return;
-  }
-
-  appendMessage("You: " + text, "user");
-  input.value = "";
-
-  messageCount++;
-  localStorage.setItem("messageCount", messageCount);
-
-  let response;
-
-  try {
-    response = await fetch("/chat-stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text,
-        personality: personalitySelect.value,
-        email,
-        is_free: !isPremium
-      })
-    });
-  } catch {
-    appendMessage(
-      "DailyMind: Network error. Please try again.",
-      "bot"
-    );
-    return;
-  }
-
-  if (!response.ok || !response.body) {
-    let errorMessage = "Please try again shortly.";
-
-    if (response.status === 403) {
-      errorMessage =
-        "🔒 You’ve reached today’s free limit. Upgrade to continue.";
-      lockChat();
-    }
-
-    appendMessage("DailyMind: " + errorMessage, "bot");
-    return;
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-
-  appendMessage("DailyMind: ", "bot");
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    chatBox.lastChild.textContent += decoder.decode(value);
+  /***********************
+    UI HELPERS
+  ************************/
+  function appendMessage(text, className) {
+    const div = document.createElement("div");
+    div.className = className;
+    div.textContent = text;
+    chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  if (!isPremium && messageCount >= FREE_LIMIT) {
-    lockChat();
+  function showEmailModal() {
+    document.getElementById("emailModal").style.display = "flex";
   }
-};
 
-/***********************
-  AUTO LOCK ON LOAD
-************************/
-if (!isPremium && messageCount >= FREE_LIMIT) {
-  lockChat();
-}
+  window.saveEmail = function () {
+    const value = document.getElementById("emailInput").value.trim();
+
+    if (!value || !value.includes("@")) {
+      alert("Please enter a valid email");
+      return;
+    }
+
+    localStorage.setItem("email", value);
+    email = value;
+
+    document.getElementById("emailModal").style.display = "none";
+
+    appendMessage("DailyMind: Thanks. You can continue now.", "bot");
+  };
+
+  function openPricing() {
+    window.location.href = "/pricing";
+  }
+
+  window.openPricing = openPricing;
+
+  function lockChat() {
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    appendMessage(
+      "🔒 You’ve reached today’s free limit. Upgrade to continue.",
+      "system"
+    );
+
+    const upgradeDiv = document.createElement("div");
+    upgradeDiv.className = "upgrade-box";
+    upgradeDiv.innerHTML = `
+      <button class="upgrade-btn" onclick="openPricing()">
+        🚀 Upgrade to Premium
+      </button>
+    `;
+    chatBox.appendChild(upgradeDiv);
+  }
+
+  /***********************
+    CHAT HANDLER
+  ************************/
+  sendBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    // ✅ Force email for new users
+    if (!email) {
+      showEmailModal();
+      appendMessage("DailyMind: Please enter your email to continue.", "bot");
+      return;
+    }
+
+    // ✅ Free limit check
+    if (!isPremium && messageCount >= FREE_LIMIT) {
+      lockChat();
+      return;
+    }
+
+    appendMessage("You: " + text, "user");
+    input.value = "";
+
+    messageCount++;
+    localStorage.setItem("messageCount", messageCount);
+
+    let response;
+
+    try {
+      response = await fetch("/chat-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          personality: personalitySelect.value,
+          email
+        })
+      });
+    } catch {
+      appendMessage("DailyMind: Network error. Try again.", "bot");
+      return;
+    }
+
+    if (!response.ok) {
+      if (response.status === 403) {
+        lockChat();
+        return;
+      }
+
+      appendMessage("DailyMind: Server error. Please try again.", "bot");
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    appendMessage("DailyMind: ", "bot");
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      chatBox.lastChild.textContent += decoder.decode(value);
+    }
+
+    if (!isPremium && messageCount >= FREE_LIMIT) {
+      lockChat();
+    }
+  });
+
+});
