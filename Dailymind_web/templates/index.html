@@ -23,7 +23,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/static/style.css" />
 
-  <!-- UI FIXES -->
   <style>
     .chat-wrapper {
       position: relative;
@@ -31,7 +30,6 @@
       margin: 40px auto;
     }
 
-    /* Small upgrade button */
     .top-upgrade-btn {
       position: absolute;
       top: -42px;
@@ -44,10 +42,8 @@
       font-weight: 600;
       cursor: pointer;
       font-size: 14px;
-      width: auto;
     }
 
-    /* Send row layout */
     .send-row {
       display: flex;
       gap: 8px;
@@ -70,8 +66,45 @@
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
-      width: auto;
       min-width: 90px;
+    }
+
+    /* ✅ EMAIL MODAL */
+    #emailModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .email-box {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .email-box input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .email-box button {
+      margin-top: 15px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #22c55e;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -110,24 +143,11 @@
   </div>
 </section>
 
-<!-- SEO TEXT -->
-<section style="max-width:900px;margin:80px auto;padding:0 20px;color:#444;">
-  <h2>What is DailyMind?</h2>
-  <p>DailyMind is a private AI mentor for calm thinking and reflection.</p>
-
-  <h2>Why use it?</h2>
-  <p>Unlike public chatbots, DailyMind focuses on privacy and clarity.</p>
-
-  <h2>Who is it for?</h2>
-  <p>Anyone who wants a quiet place to think, reflect, or journal.</p>
-</section>
-
 <!-- CHAT -->
 <a id="chat"></a>
 
 <div class="chat-wrapper">
 
-  <!-- SMALL UPGRADE BUTTON -->
   <button class="top-upgrade-btn" onclick="openPricing()">Upgrade</button>
 
   <div class="container">
@@ -142,12 +162,24 @@
 
     <div id="chat-box" class="chat-box"></div>
 
-    <!-- FIXED SEND ROW -->
     <div class="send-row">
-  <input id="message-input" type="text" placeholder="Type your message..." />
-  <button id="send-btn" type="button">Send</button>
-  <button onclick="saveEmail()">Continue</button> 
+      <input id="message-input" type="text" placeholder="Type your message..." />
+      <button id="send-btn" type="button">Send</button>
+    </div>
   </div>
+</div>
+
+<!-- ✅ EMAIL POPUP MODAL -->
+<div id="emailModal">
+  <div class="email-box">
+    <h3>Enter your email</h3>
+    <p style="opacity:0.7;font-size:14px;">
+      DailyMind uses your email to track your free messages.
+    </p>
+
+    <input id="emailInput" type="email" placeholder="you@example.com" />
+
+    <button onclick="saveEmail()">Continue</button>
   </div>
 </div>
 
@@ -155,6 +187,7 @@
 
 </body>
 </html>
+
 
 
 
