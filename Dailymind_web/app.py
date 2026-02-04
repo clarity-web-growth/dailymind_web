@@ -232,6 +232,36 @@ def payment_success():
 if __name__ == "__main__":
     app.run(debug=True)
 
+# ======================
+# ADMIN DASHBOARD (ANALYTICS)
+# ======================
+@app.route("/admin")
+def admin_dashboard():
+    today = date.today()
+
+    total_users = User.query.count()
+
+    premium_users = User.query.filter_by(subscription="premium").count()
+    free_users = User.query.filter_by(subscription="free").count()
+
+    total_messages = db.session.query(
+       func.sum(User.message_count)
+    ).scalar() or 0
+
+    users_today = User.query.filter_by(last_used=today).count()
+
+    recent_users = User.query.order_by(User.id.desc()).limit(10).all()
+
+    return render_template(
+        "admin.html",
+        total_users=total_users,
+        premium_users=premium_users,
+        free_users=free_users,
+        total_messages=total_messages,
+        users_today=users_today,
+        recent_users=recent_users,
+    )
+
 
 
 
