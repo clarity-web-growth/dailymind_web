@@ -14,6 +14,7 @@ import requests
 from datetime import date
 from openai import OpenAI
 from models import db, User
+from sqlalchemy import func
 
 # ======================
 # APP SETUP
@@ -233,19 +234,18 @@ if __name__ == "__main__":
     app.run(debug=True)
 
 # ======================
-# ADMIN DASHBOARD (ANALYTICS)
+# ADMIN DASHBOARD
 # ======================
 @app.route("/admin")
 def admin_dashboard():
     today = date.today()
 
     total_users = User.query.count()
-
     premium_users = User.query.filter_by(subscription="premium").count()
     free_users = User.query.filter_by(subscription="free").count()
 
     total_messages = db.session.query(
-       func.sum(User.message_count)
+        func.sum(User.message_count)
     ).scalar() or 0
 
     users_today = User.query.filter_by(last_used=today).count()
@@ -261,6 +261,8 @@ def admin_dashboard():
         users_today=users_today,
         recent_users=recent_users,
     )
+
+
 
 
 
