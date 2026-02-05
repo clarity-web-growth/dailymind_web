@@ -1,82 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DailyMind Analytics</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      padding: 40px;
-    }
-
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-    }
-
-    table {
-      width: 100%;
-      margin-top: 15px;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #334155;
-    }
-
-    th {
-      text-align: left;
-      opacity: 0.8;
-    }
-  </style>
+  <title>DailyMind Admin</title>
 </head>
+<body style="background:#0f172a;color:white;font-family:Arial;padding:40px">
 
-<body>
+<h1>DailyMind Analytics</h1>
 
-<h1>📊 DailyMind Analytics Dashboard</h1>
+<p>Total Users: {{ total_users }}</p>
+<p>Free Users: {{ free_users }}</p>
+<p>Premium Users: {{ premium_users }}</p>
+<p>Total Messages: {{ total_messages }}</p>
+<p>Active Today: {{ users_today }}</p>
 
-<div class="card">
-  <h2>Users</h2>
-  <p>Total Users: <b>{{ total_users }}</b></p>
-  <p>Free Users: <b>{{ free_users }}</b></p>
-  <p>Premium Users: <b>{{ premium_users }}</b></p>
-</div>
-
-<div class="card">
-  <h2>Usage</h2>
-  <p>Total Messages Sent: <b>{{ total_messages }}</b></p>
-  <p>Active Users Today: <b>{{ users_today }}</b></p>
-</div>
-
-<div class="card">
-  <h2>Recent Users</h2>
-
-  <table>
-    <tr>
-      <th>Email</th>
-      <th>Plan</th>
-      <th>Messages</th>
-      <th>Last Used</th>
-    </tr>
-
-    {% for user in recent_users %}
-    <tr>
-      <td>{{ user.email }}</td>
-      <td>{{ user.subscription }}</td>
-      <td>{{ user.message_count }}</td>
-      <td>{{ user.last_used }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-</div>
+<h2>Recent Users</h2>
+<ul>
+{% for user in recent_users %}
+  <li>{{ user.email }} — {{ user.subscription }} — {{ user.message_count }}</li>
+{% endfor %}
+</ul>
 
 </body>
 </html>
