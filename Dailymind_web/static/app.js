@@ -24,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
     SAFETY CHECK
   ************************/
   if (!sendBtn || !input) {
-    console.error("Send button or input not found!");
     return;
   }
 
@@ -47,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const value = document.getElementById("emailInput").value.trim();
 
     if (!value || !value.includes("@")) {
-      alert("Please enter a valid email");
       return;
     }
 
@@ -56,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("emailModal").style.display = "none";
 
-    appendMessage("DailyMind: Thanks. You can continue now.", "bot");
+    appendMessage("Saved.", "bot");
   };
 
   function openPricing() {
@@ -70,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sendBtn.disabled = true;
 
     appendMessage(
-      "🔒 You’ve reached today’s free limit. Upgrade to continue.",
+      "Session limit reached.",
       "system"
     );
 
@@ -78,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
     upgradeDiv.className = "upgrade-box";
     upgradeDiv.innerHTML = `
       <button class="upgrade-btn" onclick="openPricing()">
-        🚀 Upgrade to Premium
+        View premium access
       </button>
     `;
     chatBox.appendChild(upgradeDiv);
@@ -93,20 +91,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const text = input.value.trim();
     if (!text) return;
 
-    // ✅ Force email for new users
+    // Email gate
     if (!email) {
       showEmailModal();
-      appendMessage("DailyMind: Please enter your email to continue.", "bot");
+      appendMessage("An email is required to proceed.", "bot");
       return;
     }
 
-    // ✅ Free limit check
+    // Free limit check
     if (!isPremium && messageCount >= FREE_LIMIT) {
       lockChat();
       return;
     }
 
-    appendMessage("You: " + text, "user");
+    appendMessage(text, "user");
     input.value = "";
 
     messageCount++;
@@ -125,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
       });
     } catch {
-      appendMessage("DailyMind: Network error. Try again.", "bot");
+      appendMessage("That didn’t load.", "bot");
       return;
     }
 
@@ -135,19 +133,20 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      appendMessage("DailyMind: Server error. Please try again.", "bot");
+      appendMessage("Response unavailable.", "bot");
       return;
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
-    appendMessage("DailyMind: ", "bot");
+    appendMessage("", "bot");
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       chatBox.lastChild.textContent += decoder.decode(value);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     if (!isPremium && messageCount >= FREE_LIMIT) {
@@ -156,3 +155,4 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
