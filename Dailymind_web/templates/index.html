@@ -11,13 +11,13 @@
 
   <!-- SEO -->
   <title>DailyMind – Private AI Mentor for Clarity & Emotional Balance</title>
-  <meta name="description" content="DailyMind is a private AI mentor for clarity, reflection, and emotional balance. Think clearly. Speak freely." />
-  <meta name="keywords" content="AI mentor, AI journaling app, mental clarity app, emotional balance AI" />
+  <meta name="description" content="DailyMind is a private AI mentor for clarity, reflection, and emotional balance." />
+  <meta name="keywords" content="AI mentor, reflection app, mental clarity" />
   <meta name="author" content="DailyMind" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="DailyMind – Private AI Mentor for Clarity" />
-  <meta property="og:description" content="A private AI mentor for clarity, reflection, and emotional balance." />
+  <meta property="og:description" content="A quiet space for reflection and clear thinking." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dailymind-web.onrender.com" />
 
@@ -70,7 +70,7 @@
       min-width: 90px;
     }
 
-    /* ✅ EMAIL MODAL */
+    /* EMAIL MODAL */
     #emailModal {
       display: none;
       position: fixed;
@@ -124,15 +124,16 @@
   padding: 40px;
 ">
   <div style="max-width: 520px;">
-    <div style="display:flex; align-items:center; gap:12px;">
-  <img src="/static/logo.png"
-       alt="DailyMind Logo"
-       style="width:50px; height:50px;" />
-  <h1 style="margin:0;">DailyMind</h1>
-</div>
+
+    <div style="display:flex; align-items:center; gap:12px; justify-content:center;">
+      <img src="/static/logo.png" alt="DailyMind Logo" style="width:50px; height:50px;" />
+      <h1 style="margin:0;">DailyMind</h1>
+    </div>
+
     <p style="opacity:0.85;">Think clearly. Speak freely.</p>
+
     <p style="opacity:0.7;">
-      A private AI mentor for clarity, reflection, and emotional balance.
+      A private space for reflection and clear thinking.
     </p>
 
     <a href="#chat" style="
@@ -144,7 +145,7 @@
       font-weight:600;
       text-decoration:none;
     ">
-      Start Talking
+      Begin
     </a>
   </div>
 </section>
@@ -154,43 +155,49 @@
 
 <div class="chat-wrapper">
 
-  <button class="top-upgrade-btn" onclick="openPricing()">Upgrade</button>
+  <button class="top-upgrade-btn" onclick="openPricing()">Premium access</button>
 
   <div class="container">
-  <div style="display:flex; align-items:center; gap:12px;">
-  <img src="/static/logo.png"
-       alt="DailyMind Logo"
-       style="width:50px; height:50px;" />
-  <h1 style="margin:0;">DailyMind</h1>
-</div>
+
+    <div style="display:flex; align-items:center; gap:12px;">
+      <img src="/static/logo.png" alt="DailyMind Logo" style="width:40px; height:40px;" />
+      <h1 style="margin:0;">DailyMind</h1>
+    </div>
+
     <p class="tagline">Think clearly. Speak freely.</p>
 
     <select id="personality">
-      <option>Friend</option>
-      <option>Coach</option>
-      <option>Philosopher</option>
+      <option>Neutral</option>
+      <option>Guidance</option>
+      <option>Reflection</option>
     </select>
 
     <div id="chat-box" class="chat-box"></div>
 
     <div class="send-row">
-      <input id="message-input" type="text" placeholder="Type your message..." />
-      <button id="send-btn" type="button">Send</button>
+      <input
+        id="message-input"
+        type="text"
+        placeholder="Write what’s on your mind."
+      />
+      <button id="send-btn" type="button">Continue</button>
     </div>
+
   </div>
 </div>
 
-<!-- ✅ EMAIL POPUP MODAL -->
+<!-- EMAIL POPUP MODAL -->
 <div id="emailModal">
   <div class="email-box">
-    <h3>Enter your email</h3>
+    <h3>This space is private.</h3>
+
     <p style="opacity:0.7;font-size:14px;">
-      DailyMind uses your email to track your free messages.
+      Your email is used only to maintain continuity.
     </p>
 
-    <input id="emailInput" type="email" placeholder="you@example.com" />
+    <input id="emailInput" type="email" placeholder="Email address" />
 
-    <button onclick="saveEmail()">Continue</button>
+    <button onclick="saveEmail()">Save and proceed</button>
   </div>
 </div>
 
@@ -198,6 +205,7 @@
 
 </body>
 </html>
+
 
 
 
