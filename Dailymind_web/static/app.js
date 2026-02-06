@@ -1,15 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   /***********************
-    CONFIG
-  ************************/
-  const FREE_LIMIT = 10;
-
-  /***********************
     USER STATE
   ************************/
   let email = localStorage.getItem("email");
-  let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
   let isPremium = localStorage.getItem("isPremium") === "true";
 
   /***********************
@@ -20,11 +14,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendBtn = document.getElementById("send-btn");
   const personalitySelect = document.getElementById("personality");
 
+  if (!sendBtn || !input) return;
+
   /***********************
-    SAFETY CHECK
+    SYNC PREMIUM WITH SERVER
   ************************/
-  if (!sendBtn || !input) {
-    return;
+  if (email) {
+    fetch("/check-premium", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.premium) {
+          localStorage.setItem("isPremium", "true");
+          isPremium = true;
+        }
+      })
+      .catch(() => {});
   }
 
   /***********************
@@ -44,16 +52,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.saveEmail = function () {
     const value = document.getElementById("emailInput").value.trim();
-
-    if (!value || !value.includes("@")) {
-      return;
-    }
+    if (!value || !value.includes("@")) return;
 
     localStorage.setItem("email", value);
     email = value;
 
     document.getElementById("emailModal").style.display = "none";
-
     appendMessage("Saved.", "bot");
   };
 
@@ -63,14 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.openPricing = openPricing;
 
-  function lockChat() {
+  function lockChat(messageText) {
     input.disabled = true;
     sendBtn.disabled = true;
 
-    appendMessage(
-      "Session limit reached.",
-      "system"
-    );
+    appendMessage(messageText || "Session limit reached.", "system");
 
     const upgradeDiv = document.createElement("div");
     upgradeDiv.className = "upgrade-box";
@@ -91,24 +92,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const text = input.value.trim();
     if (!text) return;
 
-    // Email gate
     if (!email) {
       showEmailModal();
-      appendMessage("An email is required to proceed.", "bot");
-      return;
-    }
-
-    // Free limit check
-    if (!isPremium && messageCount >= FREE_LIMIT) {
-      lockChat();
+      appendMessage("An email is required.", "bot");
       return;
     }
 
     appendMessage(text, "user");
     input.value = "";
-
-    messageCount++;
-    localStorage.setItem("messageCount", messageCount);
 
     let response;
 
@@ -129,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!response.ok) {
       if (response.status === 403) {
-        lockChat();
+        lockChat("Session limit reached.");
         return;
       }
 
@@ -148,11 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
       chatBox.lastChild.textContent += decoder.decode(value);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
-
-    if (!isPremium && messageCount >= FREE_LIMIT) {
-      lockChat();
-    }
   });
 
 });
-
