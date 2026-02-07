@@ -1,37 +1,16 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+
+  /***********************
+    CONFIG
+  ************************/
+  const FREE_LIMIT = 10;
 
   /***********************
     USER STATE
   ************************/
-let email = localStorage.getItem("email");
-let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
-let isPremium = false; // never trust localStorage
-
-async function verifyPremiumStatus() {
-  if (!email) return;
-
-  try {
-    const res = await fetch("/check-premium", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await res.json();
-
-    if (data.premium) {
-      isPremium = true;
-      localStorage.setItem("isPremium", "true");
-      localStorage.removeItem("messageCount"); // premium = no limit
-    } else {
-      isPremium = false;
-      localStorage.setItem("isPremium", "false");
-    }
-
-  } catch (err) {
-    console.error("Premium verification failed.");
-  }
-}
+  let email = localStorage.getItem("email");
+  let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
+  let isPremium = false; // server is authority
 
   /***********************
     DOM ELEMENTS
@@ -44,23 +23,36 @@ async function verifyPremiumStatus() {
   if (!sendBtn || !input) return;
 
   /***********************
-    SYNC PREMIUM WITH SERVER
+    VERIFY PREMIUM (SERVER AUTHORITY)
   ************************/
-  if (email) {
-    fetch("/check-premium", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.premium) {
-          localStorage.setItem("isPremium", "true");
-          isPremium = true;
-        }
-      })
-      .catch(() => {});
+  async function verifyPremiumStatus() {
+    if (!email) return;
+
+    try {
+      const res = await fetch("/check-premium", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+
+      if (data.premium) {
+        isPremium = true;
+        localStorage.setItem("isPremium", "true");
+        localStorage.removeItem("messageCount");
+      } else {
+        isPremium = false;
+        localStorage.setItem("isPremium", "false");
+      }
+
+    } catch (err) {
+      console.error("Premium verification failed.");
+    }
   }
+
+  // Wait for verification before allowing interaction
+  await verifyPremiumStatus();
 
   /***********************
     UI HELPERS
@@ -77,7 +69,7 @@ async function verifyPremiumStatus() {
     document.getElementById("emailModal").style.display = "flex";
   }
 
-  window.saveEmail = function () {
+  window.saveEmail = async function () {
     const value = document.getElementById("emailInput").value.trim();
     if (!value || !value.includes("@")) return;
 
@@ -86,6 +78,8 @@ async function verifyPremiumStatus() {
 
     document.getElementById("emailModal").style.display = "none";
     appendMessage("Saved.", "bot");
+
+    await verifyPremiumStatus();
   };
 
   function openPricing() {
@@ -166,6 +160,17 @@ async function verifyPremiumStatus() {
       chatBox.lastChild.textContent += decoder.decode(value);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+    // Only track free users locally (server still enforces real limit)
+    if (!isPremium) {
+      messageCount++;
+      localStorage.setItem("messageCount", messageCount);
+
+      if (messageCount >= FREE_LIMIT) {
+        lockChat("Session limit reached.");
+      }
+    }
+
   });
 
 });
