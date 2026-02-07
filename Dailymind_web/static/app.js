@@ -3,8 +3,35 @@ document.addEventListener("DOMContentLoaded", () => {
   /***********************
     USER STATE
   ************************/
-  let email = localStorage.getItem("email");
-  let isPremium = localStorage.getItem("isPremium") === "true";
+let email = localStorage.getItem("email");
+let messageCount = parseInt(localStorage.getItem("messageCount") || "0");
+let isPremium = false; // never trust localStorage
+
+async function verifyPremiumStatus() {
+  if (!email) return;
+
+  try {
+    const res = await fetch("/check-premium", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await res.json();
+
+    if (data.premium) {
+      isPremium = true;
+      localStorage.setItem("isPremium", "true");
+      localStorage.removeItem("messageCount"); // premium = no limit
+    } else {
+      isPremium = false;
+      localStorage.setItem("isPremium", "false");
+    }
+
+  } catch (err) {
+    console.error("Premium verification failed.");
+  }
+}
 
   /***********************
     DOM ELEMENTS
