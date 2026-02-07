@@ -1,30 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Payment Successful</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <title>Premium Activated | DailyMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body>
-  <div class="premium-wrapper">
-    <div class="premium-card">
-      <h2>Payment Successful ✅</h2>
-      <p class="subtitle">
-        Thank you for upgrading to DailyMind Premium.
-      </p>
 
-      <p style="color:#cbd5e1; font-size:14px;">
-        To activate your premium access:
-        <br><br>
-        📩 Email your **Device ID** and **payment email**
-        to:
-        <br><br>
-        <b>louisandoh63@gmail.com</b>
-      </p>
+<body style="background:#020617; color:white; display:flex; align-items:center; justify-content:center; min-height:100vh;">
 
-      <a href="/">
-        <button class="pay-btn">Back to DailyMind</button>
-      </a>
-    </div>
+  <div style="
+    max-width:420px;
+    width:90%;
+    background:#0f172a;
+    padding:40px 30px;
+    border-radius:16px;
+    border:1px solid #1e293b;
+    text-align:center;
+  ">
+
+    <h2 style="margin-bottom:12px;">
+      Premium access active.
+    </h2>
+
+    <p style="opacity:0.75; font-size:15px; line-height:1.6;">
+      Your account now has full access.
+      <br />
+      There are no usage limits.
+    </p>
+
+    <a href="/dashboard">
+      <button style="
+        margin-top:28px;
+        width:100%;
+        padding:12px;
+        border-radius:10px;
+        border:none;
+        background:#22c55e;
+        color:black;
+        font-weight:600;
+        cursor:pointer;
+      ">
+        Continue
+      </button>
+    </a>
+
   </div>
+
+  <script>
+    // Sync frontend with backend after payment
+    localStorage.setItem("isPremium", "true");
+    localStorage.removeItem("messageCount");
+  </script>
+
 </body>
 </html>
