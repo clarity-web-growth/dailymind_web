@@ -148,7 +148,35 @@ def sitemap():
         path="sitemap.xml",
         mimetype="application/xml",
     )
+# ======================
+# PAYSTACK WEBHOOK
+# ======================
+@app.route("/paystack/webhook", methods=["POST"])
+def paystack_webhook():
+    payload = request.get_json()
 
+    # Verify Paystack event
+    event = payload.get("event")
+
+    if event == "charge.success":
+        data = payload.get("data", {})
+        email = data.get("customer", {}).get("email")
+
+        if not email:
+            return "No email", 400
+
+        user = get_or_create_user(email)
+
+        user.subscription = "premium"
+        user.license_key = generate_license(email)
+        user.message_count = 0
+
+        db.session.commit()
+
+        print(f"Webhook: {email} upgraded to premium.")
+
+    return "OK", 200
+    
 # ======================
 # CHECK PREMIUM (FRONTEND)
 # ======================
@@ -283,6 +311,7 @@ def admin_dashboard():
         users_today=users_today,
         recent_users=recent_users,
     )
+
 
 
 
